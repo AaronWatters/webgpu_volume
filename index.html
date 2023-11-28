@@ -1,0 +1,13 @@
+<h1>Test html</h1>
+
+<button onclick="go()">Press me to go.</button>
+
+<script type="module">
+import {do_sample} from "./lib/main.js";
+console.log("imported: ", do_sample)
+
+window.go = function() {
+    do_sample();
+};
+
+</script>
