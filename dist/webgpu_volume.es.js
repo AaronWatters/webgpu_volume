@@ -5,13 +5,13 @@ class DataObject {
     this.usage_flags = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST;
     this.attached = false;
   }
-  attach_to_context(context) {
+  attach_to_context(context2) {
     if (this.attached) {
       throw new Error("cannot re-attach attached object.");
     }
     this.attached = true;
-    this.context = context;
-    const device = context.device;
+    this.context = context2;
+    const device = context2.device;
     this.allocate_buffer_mapped(device);
     this.load_buffer();
     this.gpu_buffer.unmap();
@@ -31,8 +31,8 @@ class DataObject {
     return this.gpu_buffer;
   }
   async pull_buffer() {
-    const context = this.context;
-    const device = context.device;
+    const context2 = this.context;
+    const device = context2.device;
     const out_flags = GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ;
     const output_buffer = device.createBuffer({
       size: this.buffer_size,
@@ -57,8 +57,8 @@ class DataObject {
     return result2;
   }
   async push_buffer(array) {
-    const context = this.context;
-    const device = context.device;
+    const context2 = this.context;
+    const device = context2.device;
     const size = array.byteLength;
     if (size > this.buffer_size) {
       throw new Error("push buffer too large " + [size, this.buffer_size]);
@@ -89,8 +89,8 @@ class DataObject {
     source_buffer.destroy();
   }
   bindGroupLayout(type) {
-    const context = this.context;
-    const device = context.device;
+    const context2 = this.context;
+    const device = context2.device;
     type = type || "storage";
     const binding = 0;
     const layoutEntry = {
@@ -107,8 +107,8 @@ class DataObject {
     });
     return layout;
   }
-  bindGroup(layout, context) {
-    const device = context.device;
+  bindGroup(layout, context2) {
+    const device = context2.device;
     const bindGroup = device.createBindGroup({
       layout,
       entries: [
@@ -368,21 +368,21 @@ const GPUVolume = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.definePro
   Volume
 }, Symbol.toStringTag, { value: "Module" }));
 const frame_declarations = "\n// Framework for image volume data in WebGPU.\n\n// replace the following line to get other content types.\n\n//alias ContentType=u32;\n\nstruct VolumeGeometry {\n    // Volume dimensions. IJK + error indicator.\n    shape : vec4u,\n    // Convert index space to model space,\n    ijk2xyz : mat4x4f,\n    // Inverse: convert model space to index space.\n    xyz2ijk : mat4x4f\n}\n\nstruct VolumeU32 {\n    geometry : VolumeGeometry,\n    content : array<u32>\n}\n\nalias Volume=VolumeU32;\n\n/*\nstruct VolumeU32 {\n    geometry : VolumeGeometry,\n    content : array<u32>\n}\n\nstruct VolumeU8 {\n    geometry : VolumeGeometry,\n    content : array<u32>\n}\n*/\n\nstruct IndexOffset {\n    offset : u32,\n    is_valid : bool\n}\n\nstruct OffsetIndex {\n    ijk: vec3u,\n    is_valid: bool\n}\n\n// Buffer offset for volume index ijk.\nfn offset_of(ijk : vec3u, geom : ptr<function, VolumeGeometry>) -> IndexOffset {\n    var result : IndexOffset;\n    var shape = (*geom).shape.xyz;\n    result.is_valid = all(ijk < shape);\n    if (result.is_valid) {\n        let layer = ijk.x;\n        let row = ijk.y;\n        let column = ijk.z;\n        let height = shape.y;\n        let width = shape.z;\n        result.offset = (layer * height + row) * width + column;\n    }\n    return result;\n}\n\n// Convert array offset to checked ijk index\nfn index_of(offset: u32, geom : ptr<function, VolumeGeometry>) -> OffsetIndex {\n    var result : OffsetIndex;\n    result.is_valid = false;\n    var shape = (*geom).shape;\n    let depth = shape.x;\n    let height = shape.y;\n    let width = shape.z;\n    let LR = offset / width;\n    let column = offset - (LR * width);\n    let layer = LR / height;\n    let row = LR - (layer * height);\n    if (layer < depth) {\n        result.ijk.x = layer;\n        result.ijk.y = row;\n        result.ijk.z = column;\n        result.is_valid = true;\n    }\n    return result;\n}\n\n// Convert float vector indices to checked unsigned index\nfn offset_of_f(ijk_f : vec3f, geom : ptr<function, VolumeGeometry>) -> IndexOffset {\n    var shape = (*geom).shape;\n    var result : IndexOffset;\n    result.is_valid = false;\n    if (all(ijk_f >= vec3f(0.0, 0.0, 0.0)) && all(ijk_f < vec3f(shape.xyz))) {\n        result = offset_of(vec3u(ijk_f), geom);\n    }\n    return result;\n}\n\n// Convert model xyz to index space (as floats)\nfn to_index_f(xyz : vec3f, geom : ptr<function, VolumeGeometry>) -> vec3f {\n    var xyz2ijk = (*geom).xyz2ijk;\n    let xyz1 = vec4f(xyz, 1.0);\n    let ijk1 = xyz2ijk * xyz1;\n    return ijk1.xyz;\n}\n\n// Convert index floats to model space.\nfn to_model_f(ijk_f : vec3f, geom : ptr<function, VolumeGeometry>) -> vec3f {\n    var ijk2xyz = (*geom).ijk2xyz;\n    let ijk1 = vec4f(ijk_f, 1.0);\n    let xyz1 = ijk2xyz * ijk1;\n    return xyz1.xyz;\n}\n\n// Convert unsigned int indices to model space.\nfn to_model(ijk : vec3u, geom : ptr<function, VolumeGeometry>) -> vec3f {\n    return to_model_f(vec3f(ijk), geom);\n}\n\n// Convert xyz model position to checked index offset.\nfn offset_of_xyz(xyz : vec3f, geom : ptr<function, VolumeGeometry>) -> IndexOffset {\n    return offset_of_f(to_index_f(xyz, geom), geom);\n}";
-function volume_shader_code(suffix, context) {
+function volume_shader_code(suffix, context2) {
   const gpu_shader = frame_declarations + suffix;
-  return context.device.createShaderModule({ code: gpu_shader });
+  return context2.device.createShaderModule({ code: gpu_shader });
 }
 class Action {
   constructor() {
     this.attached = false;
   }
-  attach_to_context(context) {
+  attach_to_context(context2) {
     this.attached = true;
-    this.context = context;
+    this.context = context2;
   }
   run() {
-    const context = this.context;
-    const device = context.device;
+    const context2 = this.context;
+    const device = context2.device;
     const commandEncoder = device.createCommandEncoder();
     this.add_pass(commandEncoder);
     const gpuCommands = commandEncoder.finish();
@@ -400,12 +400,12 @@ class SampleVolume extends Action {
     this.ijk2xyz = ijk2xyz;
     this.targetVolume = new Volume(shape, null, ijk2xyz);
   }
-  attach_to_context(context) {
-    const device = context.device;
+  attach_to_context(context2) {
+    const device = context2.device;
     const source = this.volumeToSample;
     const target = this.targetVolume;
-    this.targetVolume.attach_to_context(context);
-    const shaderModule = volume_shader_code(embed_volume, context);
+    this.targetVolume.attach_to_context(context2);
+    const shaderModule = volume_shader_code(embed_volume, context2);
     const targetLayout = target.bindGroupLayout("storage");
     const sourceLayout = source.bindGroupLayout("read-only-storage");
     const layout = device.createPipelineLayout({
@@ -421,10 +421,10 @@ class SampleVolume extends Action {
         entryPoint: "main"
       }
     });
-    this.sourceBindGroup = source.bindGroup(sourceLayout, context);
-    this.targetBindGroup = target.bindGroup(targetLayout, context);
+    this.sourceBindGroup = source.bindGroup(sourceLayout, context2);
+    this.targetBindGroup = target.bindGroup(targetLayout, context2);
     this.attached = true;
-    this.context = context;
+    this.context = context2;
   }
   add_pass(commandEncoder) {
     const passEncoder = commandEncoder.beginComputePass();
@@ -454,6 +454,16 @@ class Panel extends DataObject {
     this.buffer_size = this.size * Int32Array.BYTES_PER_ELEMENT;
     this.usage_flags = GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST;
   }
+  resize(width, height) {
+    const size = width * height;
+    const buffer_size = size * Int32Array.BYTES_PER_ELEMENT;
+    if (buffer_size > this.buffer_size) {
+      throw new Error("buffer resize not yet implemented");
+    }
+    this.width = width;
+    this.height = height;
+    this.size = size;
+  }
 }
 const GPUColorPanel = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -461,8 +471,18 @@ const GPUColorPanel = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defin
 }, Symbol.toStringTag, { value: "Module" }));
 const painter_code = "\n// Paint colors to rectangle\nstruct Out {\n    @builtin(position) pos: vec4<f32>,\n    @location(0) color: vec4<f32>,\n}\n\nstruct uniforms_struct {\n    width: f32,\n    height: f32,\n    x0: f32,\n    y0: f32,\n    dx: f32,\n    dy: f32,\n    //minimum: f32,\n    //maximum: f32,\n}\n\n@binding(0) @group(0) var<uniform> uniforms: uniforms_struct;\n\n@vertex fn vertexMain(\n    @builtin(vertex_index) vi : u32,\n    @builtin(instance_index) ii : u32,\n    @location(0) color: u32,\n) -> Out {\n    let width = u32(uniforms.width);\n    let height = u32(uniforms.height);\n    let x0 = uniforms.x0;\n    let y0 = uniforms.y0;\n    let dw = uniforms.dx;\n    let dh = uniforms.dy;\n    const pos = array(\n        // lower right triangle of pixel\n        vec2f(0, 0), \n        vec2f(1, 0), \n        vec2f(1, 1),\n        // upper left triangle of pixel\n        vec2f(1, 1), \n        vec2f(0, 1), \n        vec2f(0, 0)\n    );\n    let row = ii / width;\n    let col = ii % width;\n    let offset = pos[vi];\n    let x = x0 + dw * (offset.x + f32(col));\n    let y = y0 + dh * (offset.y + f32(row));\n    let colorout = unpack4x8unorm(color);\n    return Out(vec4<f32>(x, y, 0., 1.), colorout);\n}\n\n@fragment fn fragmentMain(@location(0) color: vec4<f32>) \n-> @location(0) vec4f {\n    return color;\n}\n";
 class PaintPanelUniforms extends DataObject {
-  constructor(width, height, x0, y0, dx, dy) {
+  constructor(panel2) {
     super();
+    this.match_panel(panel2);
+    this.usage_flags = GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX;
+  }
+  match_panel(panel2) {
+    const width = panel2.width;
+    const height = panel2.height;
+    const x0 = -1;
+    const y0 = -1;
+    const dx = 2 / width;
+    const dy = 2 / height;
     this.set_array(
       width,
       height,
@@ -471,8 +491,6 @@ class PaintPanelUniforms extends DataObject {
       dx,
       dy
     );
-    this.buffer_size = this.array.byteLength;
-    this.usage_flags = GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX;
   }
   load_buffer(buffer) {
     buffer = buffer || this.gpu_buffer;
@@ -489,39 +507,56 @@ class PaintPanelUniforms extends DataObject {
       dx,
       dy
     ]);
+    this.buffer_size = this.array.byteLength;
+  }
+  reset(panel2) {
+    this.match_panel(panel2);
+    this.push_buffer(this.array);
+  }
+}
+class ImagePainter {
+  constructor(rgbaImage, width, height, to_canvas) {
+    var that = this;
+    that.to_canvas = to_canvas;
+    that.context = new Context();
+    that.rgbaImage = rgbaImage;
+    that.width = width;
+    that.height = height;
+    this.context.connect_then_call(() => that.init_image());
+  }
+  init_image() {
+    this.panel = new Panel(this.width, this.height);
+    this.painter = new PaintPanel(this.panel, this.to_canvas);
+    this.panel.attach_to_context(this.context);
+    this.painter.attach_to_context(this.context);
+    this.panel.push_buffer(this.rgbaImage);
+    this.painter.run();
+  }
+  change_image(rgbaImage) {
+    this.rgbaImage = rgbaImage;
+    this.panel.push_buffer(rgbaImage);
+    this.painter.reset(this.panel);
+    this.painter.run();
   }
 }
 class PaintPanel extends Action {
-  constructor(panel, to_canvas) {
+  constructor(panel2, to_canvas) {
     super();
-    this.panel = panel;
+    this.panel = panel2;
     this.to_canvas = to_canvas;
-    const width = panel.width;
-    const height = panel.height;
-    const x0 = -1;
-    const y0 = -1;
-    const dx = 2 / width;
-    const dy = 2 / height;
-    this.uniforms = new PaintPanelUniforms(
-      width,
-      height,
-      x0,
-      y0,
-      dx,
-      dy
-    );
+    this.uniforms = new PaintPanelUniforms(panel2);
   }
-  attach_to_context(context) {
-    this.context = context;
-    const device = context.device;
+  attach_to_context(context2) {
+    this.context = context2;
+    const device = context2.device;
     const to_canvas = this.to_canvas;
     this.webgpu_context = to_canvas.getContext("webgpu");
     const format = navigator.gpu.getPreferredCanvasFormat();
     this.webgpu_context.configure({ device, format });
     if (!this.panel.attached) {
-      this.panel.attach_to_context(context);
+      this.panel.attach_to_context(context2);
     }
-    this.uniforms.attach_to_context(context);
+    this.uniforms.attach_to_context(context2);
     const colorStride = {
       arrayStride: Uint32Array.BYTES_PER_ELEMENT,
       stepMode: "instance",
@@ -548,14 +583,6 @@ class PaintPanel extends Action {
         targets: [{ format }]
       }
     });
-    const view = this.webgpu_context.getCurrentTexture().createView();
-    this.colorAttachments = [
-      {
-        view,
-        loadOp: "clear",
-        storeOp: "store"
-      }
-    ];
     const uniformsBuffer = this.uniforms.gpu_buffer;
     const uniformsLength = this.uniforms.buffer_size;
     this.uniformBindGroup = device.createBindGroup({
@@ -572,7 +599,19 @@ class PaintPanel extends Action {
       ]
     });
   }
+  reset(panel2) {
+    this.panel = panel2;
+    this.uniforms.reset(panel2);
+  }
   add_pass(commandEncoder) {
+    const view = this.webgpu_context.getCurrentTexture().createView();
+    this.colorAttachments = [
+      {
+        view,
+        loadOp: "clear",
+        storeOp: "store"
+      }
+    ];
     const colorAttachments = this.colorAttachments;
     const pipeline = this.pipeline;
     const colorbuffer = this.panel.gpu_buffer;
@@ -587,6 +626,7 @@ class PaintPanel extends Action {
 }
 const PaintPanel$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
+  ImagePainter,
   PaintPanel,
   PaintPanelUniforms
 }, Symbol.toStringTag, { value: "Module" }));
@@ -610,6 +650,14 @@ class Context {
         this.connected = true;
       }
     }
+  }
+  connect_then_call(callback) {
+    var that = this;
+    async function go() {
+      await that.connect();
+      callback();
+    }
+    go();
   }
   must_be_connected() {
     if (!this.connected) {
@@ -636,9 +684,9 @@ class Context {
     result.attach_to_context(this);
     return result;
   }
-  paint(panel, to_canvas) {
+  paint(panel2, to_canvas) {
     this.must_be_connected();
-    result = new PaintPanel(panel, to_canvas);
+    result = new PaintPanel(panel2, to_canvas);
     result.attach_to_context(this);
     return result;
   }
@@ -654,8 +702,8 @@ function do_sample() {
 }
 async function do_sample_async() {
   debugger;
-  const context = new Context();
-  await context.connect();
+  const context2 = new Context();
+  await context2.connect();
   const ijk2xyz_in = [
     [1, 0, 0, 1],
     [0, 1, 0, 2],
@@ -673,17 +721,16 @@ async function do_sample_async() {
   const shape_out = [2, 2, 3];
   const content_out = [30, 2, 4, 6, 8, 10, 1, 3, 5, 7, 9, 11];
   const inputVolume = new Volume(shape_in, content_in, ijk2xyz_in);
-  inputVolume.attach_to_context(context);
+  inputVolume.attach_to_context(context2);
   const samplerAction = new SampleVolume(shape_out, ijk2xyz_out, inputVolume);
-  samplerAction.attach_to_context(context);
+  samplerAction.attach_to_context(context2);
   samplerAction.run();
   const resultArray = await samplerAction.pull();
   console.log("expected", content_out);
   console.log("got output", resultArray);
 }
-function do_paint(to_canvas) {
-  console.log("painting panel asyncronously");
-  (async () => await do_paint_async(to_canvas))();
+function do_paint(canvas) {
+  new ImagePainter(colors, 2, 2, canvas);
 }
 function RGBA(r, g, b, a) {
   return r * 255 + 256 * (g * 255 + 256 * (b * 255 + 256 * a * 255));
@@ -694,26 +741,34 @@ const colors = new Uint32Array([
   RGBA(0, 0, 1, 1),
   RGBA(1, 1, 0, 1)
 ]);
-async function do_paint_async(to_canvas) {
-  const width = 2;
-  const height = 2;
-  const panel = new Panel(width, height);
-  const painter = new PaintPanel(panel, to_canvas);
-  const context = new Context();
-  await context.connect();
-  panel.attach_to_context(context);
-  painter.attach_to_context(context);
-  panel.push_buffer(colors);
-  painter.run();
-}
 const name = "webgpu_volume";
+function context() {
+  return new Context();
+}
+function volume(shape, data, ijk2xyz) {
+  return new Volume(shape, data, ijk2xyz);
+}
+function panel(width, height) {
+  return new (void 0)(width, height);
+}
+function paint_panel(panel2, to_canvas) {
+  return new PaintPanel(panel2, to_canvas);
+}
+function sample_volume(shape, ijk2xyz, volumeToSample) {
+  return new SampleVolume(shape, ijk2xyz, volumeToSample);
+}
 export {
   GPUColorPanel,
   GPUContext,
   GPUVolume,
   PaintPanel$1 as PaintPanel,
   SampleVolume$1 as SampleVolume,
+  context,
   do_paint,
   do_sample,
-  name
+  name,
+  paint_panel,
+  panel,
+  sample_volume,
+  volume
 };
