@@ -757,6 +757,9 @@ function paint_panel(panel2, to_canvas) {
 function sample_volume(shape, ijk2xyz, volumeToSample) {
   return new SampleVolume(shape, ijk2xyz, volumeToSample);
 }
+function painter(rgbaImage, width, height, to_canvas) {
+  return new ImagePainter(rgbaImage, width, height, to_canvas);
+}
 export {
   GPUColorPanel,
   GPUContext,
@@ -768,6 +771,7 @@ export {
   do_sample,
   name,
   paint_panel,
+  painter,
   panel,
   sample_volume,
   volume

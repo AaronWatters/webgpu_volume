@@ -761,6 +761,9 @@
   function sample_volume(shape, ijk2xyz, volumeToSample) {
     return new SampleVolume(shape, ijk2xyz, volumeToSample);
   }
+  function painter(rgbaImage, width, height, to_canvas) {
+    return new ImagePainter(rgbaImage, width, height, to_canvas);
+  }
   exports2.GPUColorPanel = GPUColorPanel;
   exports2.GPUContext = GPUContext;
   exports2.GPUVolume = GPUVolume;
@@ -771,6 +774,7 @@
   exports2.do_sample = do_sample;
   exports2.name = name;
   exports2.paint_panel = paint_panel;
+  exports2.painter = painter;
   exports2.panel = panel;
   exports2.sample_volume = sample_volume;
   exports2.volume = volume;
