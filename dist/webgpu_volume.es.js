@@ -470,6 +470,20 @@ const GPUColorPanel = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defin
   Panel
 }, Symbol.toStringTag, { value: "Module" }));
 const painter_code = "\n// Paint colors to rectangle\nstruct Out {\n    @builtin(position) pos: vec4<f32>,\n    @location(0) color: vec4<f32>,\n}\n\nstruct uniforms_struct {\n    width: f32,\n    height: f32,\n    x0: f32,\n    y0: f32,\n    dx: f32,\n    dy: f32,\n    //minimum: f32,\n    //maximum: f32,\n}\n\n@binding(0) @group(0) var<uniform> uniforms: uniforms_struct;\n\n@vertex fn vertexMain(\n    @builtin(vertex_index) vi : u32,\n    @builtin(instance_index) ii : u32,\n    @location(0) color: u32,\n) -> Out {\n    let width = u32(uniforms.width);\n    let height = u32(uniforms.height);\n    let x0 = uniforms.x0;\n    let y0 = uniforms.y0;\n    let dw = uniforms.dx;\n    let dh = uniforms.dy;\n    const pos = array(\n        // lower right triangle of pixel\n        vec2f(0, 0), \n        vec2f(1, 0), \n        vec2f(1, 1),\n        // upper left triangle of pixel\n        vec2f(1, 1), \n        vec2f(0, 1), \n        vec2f(0, 0)\n    );\n    let row = ii / width;\n    let col = ii % width;\n    let offset = pos[vi];\n    let x = x0 + dw * (offset.x + f32(col));\n    let y = y0 + dh * (offset.y + f32(row));\n    let colorout = unpack4x8unorm(color);\n    return Out(vec4<f32>(x, y, 0., 1.), colorout);\n}\n\n@fragment fn fragmentMain(@location(0) color: vec4<f32>) \n-> @location(0) vec4f {\n    return color;\n}\n";
+function grey_to_rgba(grey_bytes) {
+  console.log("converting grey to rgba");
+  const ln = grey_bytes.length;
+  const rgbaImage = new Uint8Array(ln * 4);
+  for (var i = 0; i < ln; i++) {
+    const grey = grey_bytes[i];
+    const offset = i * 4;
+    rgbaImage[offset] = grey;
+    rgbaImage[offset + 1] = grey;
+    rgbaImage[offset + 2] = grey;
+    rgbaImage[offset + 3] = 0;
+  }
+  return rgbaImage;
+}
 class PaintPanelUniforms extends DataObject {
   constructor(panel2) {
     super();
@@ -516,6 +530,9 @@ class PaintPanelUniforms extends DataObject {
 }
 class ImagePainter {
   constructor(rgbaImage, width, height, to_canvas) {
+    if (rgbaImage.length == width * height) {
+      rgbaImage = grey_to_rgba(rgbaImage);
+    }
     var that = this;
     that.to_canvas = to_canvas;
     that.context = new Context();
@@ -533,6 +550,9 @@ class ImagePainter {
     this.painter.run();
   }
   change_image(rgbaImage) {
+    if (rgbaImage.length == this.width * this.height) {
+      rgbaImage = grey_to_rgba(rgbaImage);
+    }
     this.rgbaImage = rgbaImage;
     this.panel.push_buffer(rgbaImage);
     this.painter.reset(this.panel);
@@ -628,7 +648,8 @@ const PaintPanel$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.define
   __proto__: null,
   ImagePainter,
   PaintPanel,
-  PaintPanelUniforms
+  PaintPanelUniforms,
+  grey_to_rgba
 }, Symbol.toStringTag, { value: "Module" }));
 function get_context() {
   return new Context();
