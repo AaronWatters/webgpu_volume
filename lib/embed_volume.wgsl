@@ -5,6 +5,8 @@
 
 @group(1) @binding(0) var<storage, read_write> outputVolume : Volume;
 
+// xxxx add additional transform matrix
+
 @compute @workgroup_size(8)
 fn main(@builtin(global_invocation_id) global_id : vec3u) {
     var inputGeometry = inputVolume.geometry;
