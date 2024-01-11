@@ -13,7 +13,7 @@ struct parameters {
 
 @group(2) @binding(0) var<storage, read> parms: parameters;
 
-@compute @workgroup_size(8)
+@compute @workgroup_size(256)
 fn main(@builtin(global_invocation_id) global_id : vec3u) {
     // input expected to be smaller, so loop over input
     let inputOffset = global_id.x;
