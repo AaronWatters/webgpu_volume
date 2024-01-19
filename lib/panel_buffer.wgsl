@@ -1,5 +1,7 @@
 
 // Framework for panel buffer structure
+// A panel consists of a buffer representing a rectangular screen region.
+// with height and width.
 
 struct PanelOffset {
     offset: u32,
@@ -8,6 +10,7 @@ struct PanelOffset {
 }
 
 fn panel_location_of(offset: u32, height_width: vec2u)-> PanelOffset  {
+    // location of buffer offset in row/col form.
     let height = height_width[0];
     let width = height_width[1];
     var result : PanelOffset;
@@ -22,6 +25,7 @@ fn panel_location_of(offset: u32, height_width: vec2u)-> PanelOffset  {
 }
 
 fn panel_offset_of(ij: vec2u, height_width: vec2u) -> PanelOffset {
+    // buffer offset of row/col
     var result : PanelOffset;
     result.is_valid = all(ij < height_width);
     if (result.is_valid) {
@@ -34,6 +38,7 @@ fn panel_offset_of(ij: vec2u, height_width: vec2u) -> PanelOffset {
 }
 
 fn f_panel_offset_of(xy: vec2f, height_width: vec2u)-> PanelOffset {
+    // buffer offset of vec2f row/col
     var result : PanelOffset;
     result.is_valid = ((xy[0] >= 0.0) && (xy[1] >= 0.0));
     if (result.is_valid) {
