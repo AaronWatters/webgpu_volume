@@ -4,7 +4,7 @@
 // keep everything f32 for simplicity of transfers
 
 struct DepthBufferF32 {
-    // height/width and 2 alignment slots
+    // height/width followed by default depth and default value.
     shape: vec4f,
     // content data followed by depth as a single array
     data_and_depth: array<f32>,
