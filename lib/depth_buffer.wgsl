@@ -3,9 +3,21 @@
 
 // keep everything f32 for simplicity of transfers
 
+struct depthShape {
+    height: f32,
+    width: f32,
+    // "null" marker depth and value.
+    default_depth: f32,
+    default_value: f32,
+}
+
+fn is_default(value: f32, depth:f32, for_shape: depthShape) -> bool {
+    return (for_shape.default_depth == depth) && (for_shape.default_value == value);
+}
+
 struct DepthBufferF32 {
     // height/width followed by default depth and default value.
-    shape: vec4f,
+    shape: depthShape,
     // content data followed by depth as a single array
     data_and_depth: array<f32>,
 }
@@ -18,11 +30,11 @@ struct BufferLocation {
 }
 
 // 2d u32 indices to array locations
-fn depth_buffer_location_of(ij: vec2i, shape: vec4f) -> BufferLocation {
+fn depth_buffer_location_of(ij: vec2i, shape: depthShape) -> BufferLocation {
     var result : BufferLocation;
     result.ij = ij;
-    let width = u32(shape.y);
-    let height = u32(shape.x);
+    let width = u32(shape.width);
+    let height = u32(shape.height);
     let row = ij.x;
     let col = ij.y;
     let ucol = u32(col);
@@ -36,14 +48,14 @@ fn depth_buffer_location_of(ij: vec2i, shape: vec4f) -> BufferLocation {
 }
 
 // 2d f32 indices to array locations
-fn f_depth_buffer_location_of(xy: vec2f, shape: vec4f) -> BufferLocation {
+fn f_depth_buffer_location_of(xy: vec2f, shape: depthShape) -> BufferLocation {
     return depth_buffer_location_of(vec2i(xy.xy), shape);
 }
 
-fn depth_buffer_indices(data_offset: u32, shape: vec4f) -> BufferLocation {
+fn depth_buffer_indices(data_offset: u32, shape: depthShape) -> BufferLocation {
     var result : BufferLocation;
-    let width = u32(shape.y);
-    let height = u32(shape.x);
+    let width = u32(shape.width);
+    let height = u32(shape.height);
     let size = width * height;
     result.valid = (data_offset < size);
     if (result.valid) {
