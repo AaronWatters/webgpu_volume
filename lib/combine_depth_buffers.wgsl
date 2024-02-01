@@ -25,9 +25,11 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
                 sign = 1;
             }
             if (((inputDepth - outputDepth) * f32(sign)) > 0.0) {
-                outputDB.data_and_depth[outputLocation.depth_offset] = inputDepth;
                 var inputData = inputDB.data_and_depth[inputLocation.data_offset];
-                outputDB.data_and_depth[outputLocation.data_offset] = inputData;
+                if (!is_default(inputData, inputDepth, inputShape)) {
+                    outputDB.data_and_depth[outputLocation.depth_offset] = inputDepth;
+                    outputDB.data_and_depth[outputLocation.data_offset] = inputData;
+                }
             }
         }
     }
