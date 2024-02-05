@@ -19,6 +19,7 @@ fn new_out_value(in_value: u32, out_value: u32, parms: parameters) -> u32 {
     let gray_level = u32(intensity * 255.0);
     //let color = vec4u(gray_level, gray_level, gray_level, 255u);
     //let result = pack4xU8(color); ???error: unresolved call target 'pack4xU8'
-    let result = 255u + 256 * (gray_level + 256 * (gray_level + 256 * gray_level));
+    let result = gray_level + 256 * (gray_level + 256 * (gray_level + 256 * 255));
+    //let result = 255u + 256 * (gray_level + 256 * (gray_level + 256 * gray_level));
     return result;
 }
