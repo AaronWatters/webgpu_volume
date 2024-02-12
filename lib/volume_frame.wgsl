@@ -47,7 +47,7 @@ struct OffsetIndex {
 fn offset_of(ijk : vec3u, geom : ptr<function, VolumeGeometry>) -> IndexOffset {
     var result : IndexOffset;
     var shape = (*geom).shape.xyz;
-    result.is_valid = all(ijk < shape);
+    result.is_valid = all(ijk.zxy < shape);
     if (result.is_valid) {
         let layer = ijk.x;
         let row = ijk.y;
