@@ -43,6 +43,12 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
                     current_value = value;
                     initial_value_found = true;
                 }
+                // debug
+                //let t = outputOffset/2u;
+                //if (t * 2 == outputOffset) {
+                //    current_value = bitcast<f32>(inputVolume.content[0]);
+                //}
+                // end debug
             }
         }
         outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;
