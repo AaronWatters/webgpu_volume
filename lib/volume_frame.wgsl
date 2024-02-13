@@ -24,7 +24,7 @@ alias Volume=VolumeU32;
 /*
 struct VolumeU32 {
     geometry : VolumeGeometry,
-    content : array<u32>
+    content : array<u32>=
 }
 
 struct VolumeU8 {
@@ -47,7 +47,8 @@ struct OffsetIndex {
 fn offset_of(ijk : vec3u, geom : ptr<function, VolumeGeometry>) -> IndexOffset {
     var result : IndexOffset;
     var shape = (*geom).shape.xyz;
-    result.is_valid = all(ijk.zxy < shape);
+    //result.is_valid = all(ijk.zxy < shape);
+    result.is_valid = all(ijk.xyz < shape);
     if (result.is_valid) {
         let layer = ijk.x;
         let row = ijk.y;
