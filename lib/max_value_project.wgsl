@@ -19,7 +19,7 @@ struct parameters {
 
 @compute @workgroup_size(256)
 fn main(@builtin(global_invocation_id) global_id : vec3u) {
-    let local_parms = parms;
+    //let local_parms = parms;
     let outputOffset = global_id.x;
     let outputShape = outputDB.shape;
     let outputLocation = depth_buffer_indices(outputOffset, outputShape);
