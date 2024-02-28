@@ -25,6 +25,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     let outputShape = outputDB.shape;
     let outputLocation = depth_buffer_indices(outputOffset, outputShape);
     if (outputLocation.valid) {
+        // XXXX THIS SHOULD USE OFFSETS IN THE OUTPUT BUFFER REFERENCE FRAME
         var inputGeometry = inputVolume.geometry;
         var output_value = parms.default_value;
         var offset_sum = vec3f(0.0f, 0.0f, 0.0f);
