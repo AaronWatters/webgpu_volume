@@ -1,13 +1,74 @@
-<h1>Test html</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test max projection pipeline</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .slider {
+        width: 500px;
+        margin: 20px auto;
+    }
+    #angleValue {
+        width: 200px;
+        margin: 20px auto;
+    }
+    .slider-container {
+        width: 300px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+</style>
+</head>
+<body>
 
-<button onclick="go()">Press me to go.</button>
+<h1>Example HTML pages.</h1>
 
-<script type="module">
-import {do_sample} from "./lib/main.js";
-console.log("imported: ", do_sample)
+<p>
+    The following pages exercise the <code>webgpu_volume</code> functionality
+    for demonstration and debugging.
+</p>
 
-window.go = function() {
-    do_sample();
-};
+<p>
+    Some pages generate visual outputs, and others only send 
+    output to the Javascript console.
+</p>
 
-</script>
+<p>
+    <a href="demo_html/try_pipeline.html">try_pipeline</a> -- max value projection.
+</p>
+
+<p>
+    <a href="demo_html/try_threshold.html">try_threshold</a> -- isosurface.
+</p>
+
+<p>
+    <a href="demo_html/mouse_paste_test.html">Paste to canvas using mouse events.</a>
+</p>
+
+<p>
+    <a href="demo_html/canvas_mouse_tracking.html">canvas_mouse_tracking.html</a>
+</p>
+
+<p>
+    <a href="demo_html/try_paint2.html">Paint panel.</a>
+</p>
+
+<p>
+    <a href="demo_html/try_paste.html">Paste panel (no visual).</a>
+</p>
+
+<p>
+    <a href="demo_html/try_sample.html">Sample volume (no visual).</a>
+</p>
+
+</body>
+</html>
