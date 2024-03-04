@@ -1,0 +1,15 @@
+<h1>Sample volume</h1>
+
+Output only to console (no visual).<br>
+
+<button onclick="go()">Press me to go.</button>
+
+<script type="module">
+import {do_sample} from "../lib/main.js";
+console.log("imported: ", do_sample)
+
+window.go = function() {
+    do_sample();
+};
+
+</script>

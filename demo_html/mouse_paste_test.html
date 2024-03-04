@@ -1,0 +1,26 @@
+<h1>Test mouse paste canvas</h1>
+
+<button onclick="go()">Press me to go.</button>
+
+<br>
+
+<canvas 
+    id="canvas" 
+    width="512" 
+    height="512"
+    onmousemove="mousemove(event)"
+    >
+</canvas>
+
+<div id="info">info here.</div>
+
+<script type="module">
+import {do_mouse_paste} from "../lib/proofs_of_concepts/mousepaste.js";
+console.log("imported: ", do_mouse_paste)
+
+window.go = function() {
+    // this defines window.mousemove
+    do_mouse_paste(canvas);
+};
+
+</script>

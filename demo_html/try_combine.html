@@ -1,0 +1,17 @@
+
+
+<h1>Test combining depth buffer</h1>
+
+All output goes to the console log. <br>
+
+<button onclick="go()">Press me to go.</button>
+
+<script type="module">
+import {do_combine} from "../lib/main.js";
+console.log("imported: ", do_combine)
+
+window.go = function() {
+    do_combine();
+};
+
+</script>

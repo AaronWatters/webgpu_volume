@@ -1,0 +1,15 @@
+<h1>Test gray filter</h1>
+
+Output only to console. <br>
+
+<button onclick="go()">Press me to go.</button>
+
+<script type="module">
+import {do_gray} from "../lib/main.js";
+console.log("imported: ", do_gray)
+
+window.go = function() {
+    do_gray();
+};
+
+</script>

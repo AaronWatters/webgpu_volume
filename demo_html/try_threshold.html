@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test threshold pipeline</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .slider-container {
+        width: 550px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: left;
+        margin-top: 10px;
+    }
+    .slider {
+        width: 500px;
+        margin: 20px auto;
+    }
+</style>
+</head>
+<body>
+
+<h1>Test threshold pipeline</h1>
+
+<div class="slider-container">
+    <input type="range" min="31000" max="36000" id="threshold-slider" class="slider">
+    <div class="slider-label">
+        <span>threshold: &nbsp;</span>
+        <span id="threshold-value">0</span>
+    </div>
+</div>
+
+<canvas id="canvas" width="1000" height="1000"></canvas>
+
+<script type="module">
+    import * as threshold_test from "../lib/proofs_of_concepts/threshold_test.js";
+
+    const thresholdSlider = document.getElementById('threshold-slider');
+    const thresholdValue = document.getElementById('threshold-value');
+
+
+    //const file_path = "./cammy.bin";
+    const file_path = "../sample_data/im8.bin";
+    //const file_path = "../sample_data/mri.bin";
+    //const file_path = "../waves.bin";
+    const pipeline = new threshold_test.ThresholdPipeline(
+        file_path, canvas, thresholdSlider);
+
+    function onslide() {
+        const threshold = thresholdSlider.value;
+        thresholdValue.textContent = threshold;
+        pipeline.change_parameters(null, threshold);
+    };
+
+    thresholdSlider.addEventListener('input', onslide);
+
+    onslide();
+</script>
+
+</body>
+</html>

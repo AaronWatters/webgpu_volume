@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test max projection pipeline</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .slider {
+        width: 500px;
+        margin: 20px auto;
+    }
+    #angleValue {
+        width: 200px;
+        margin: 20px auto;
+    }
+    .slider-container {
+        width: 300px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+</style>
+</head>
+<body>
+
+<h1>Test max projection pipeline</h1>
+
+Drag the the mouse over the image to rotate. <br>
+
+<!--
+<button onclick="go()">Press me to go.</button>
+
+<button onclick="rotate()">Press me to rotate.</button>
+
+
+<br>
+<input type="range" min="0" max="6.28319" step="0.01" value="0" id="alphaSlider" class="slider">
+<br>
+<input type="range" min="0" max="6.28319" step="0.01" value="0" id="betaSlider" class="slider">
+<br>
+<input type="range" min="0" max="6.28319" step="0.01" value="0" id="gammaSlider" class="slider">
+<br>
+<textarea id="angleValue" rows="1" readonly></textarea>
+
+<div class="slider-container">
+    <input type="range" min="-100" max="100" step="1" value="0" id="k-slider">
+    <div class="slider-label">
+        <span>K:</span>
+        <span id="k-value">0</span>
+    </div>
+</div>
+<br>
+-->
+
+<canvas id="canvas" width="1000" height="1000"></canvas>
+
+<script type="module">
+    //const file_path = "./cammy.bin";
+const file_path = "../sample_data/im8.bin";
+import {do_pipeline, do_rotation} from "../lib/proofs_of_concepts/pipeline_test.js";
+//console.log("imported: ", do_pipeline)
+
+const kSlider = document.getElementById('k-slider');
+const kValue = document.getElementById('k-value');
+
+window.go = function() {
+    do_pipeline(canvas, file_path, kSlider, kValue);
+};
+
+window.rotate = function() {
+    do_rotation(1,1,1,kSlider,kValue);
+};
+
+const alphaSlider = document.getElementById('alphaSlider');
+const betaSlider = document.getElementById('betaSlider');
+const gammaSlider = document.getElementById('gammaSlider');
+const angleValue = document.getElementById('angleValue');
+
+// Update the text area value when the slider value changes
+function onslide() {
+    const alpha = alphaSlider.value;
+    const beta = betaSlider.value;
+    const gamma = gammaSlider.value;
+    angleValue.value = [alpha, beta, gamma];
+    do_rotation(alpha, beta, gamma, kSlider, kValue);
+};
+
+//lphaSlider.addEventListener('input', onslide);
+//betaSlider.addEventListener('input', onslide);
+//gammaSlider.addEventListener('input', onslide);
+//kSlider.addEventListener('input', onslide);
+do_pipeline(canvas, file_path, kSlider, kValue);
+</script>
+
+</body>
