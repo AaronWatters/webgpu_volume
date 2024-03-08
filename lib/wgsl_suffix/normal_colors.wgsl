@@ -74,6 +74,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
             let L = length(offset_sum);
             if (L > 1e-10) {
                 let N = normalize(offset_sum);
+                // xxx should clamp?
                 let colors = vec3u((N + 1.0) * 127.5);
                 //let colors = vec3u(255, 0, 0);  // debug
                 //let result = pack4xU8(color); ???error: unresolved call target 'pack4xU8'
