@@ -46,3 +46,13 @@ fn f_panel_offset_of(xy: vec2f, height_width: vec2u)-> PanelOffset {
     }
     return result;
 }
+
+// xxxx this should be a builtin 'pack4xU8'...
+fn f_pack_color(color: vec3f) -> u32 {
+    let ucolor = vec3u(clamp(
+        255.0 * color, 
+        vec3f(0.0, 0.0, 0.0),
+        vec3f(255.0, 255.0, 255.0)));
+    return ucolor[0] + 
+        256u * (ucolor[1] + 256u * (ucolor[2] + 256u * 255u));
+}
