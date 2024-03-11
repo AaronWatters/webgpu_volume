@@ -28,6 +28,14 @@
 
 <h1>Segmentation with shading</h1>
 
+<div class="slider-container">
+    <input type="range" min="0" max="1" step="0.01" id="ratio-slider" class="slider">
+    <div class="slider-label">
+        <span>threshold: &nbsp;</span>
+        <span id="ratio-value">0</span>
+    </div>
+</div>
+
 <canvas id="canvas" width="1000" height="1000"></canvas>
 
 <br>
@@ -59,14 +67,21 @@
     const file_path = "../sample_data/segmentation.bin";
     //const file_path = "../sample_data/mri.bin";
     //const file_path = "../waves.bin";
+    const ratio = 0.7;
     const pipeline = new mix_test.MixPipeline(
-        file_path, random_colors, canvas);
+        file_path, random_colors, canvas, ratio);
+
+    const ratioSlider = document.getElementById('ratio-slider');
+    const ratioValue = document.getElementById('ratio-value');
+    ratioSlider.value = ratio;
+    ratioValue.textContent = ratio;
 
     function onslide() {
-        const threshold = null;
-        thresholdValue.textContent = threshold;
-        pipeline.change_parameters(null, threshold);
+        const ratio = ratioSlider.value;
+        ratioValue.textContent = ratio;
+        pipeline.change_parameters(null, ratio);
     };
+    ratioSlider.addEventListener('input', onslide);
 
     function button_click() {
         pipeline.debug_button_callback();
