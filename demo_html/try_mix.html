@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Segmentation with shading</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .slider-container {
+        width: 550px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: left;
+        margin-top: 10px;
+    }
+    .slider {
+        width: 500px;
+        margin: 20px auto;
+    }
+</style>
+</head>
+<body>
+
+<h1>Segmentation with shading</h1>
+
+<canvas id="canvas" width="1000" height="1000"></canvas>
+
+<br>
+
+<button onclick="button_click()">debug button</button>
+
+<script type="module">
+    import * as mix_test from "../lib/proofs_of_concepts/mix_test.js";
+
+    function rndint() {
+        return Math.floor(Math.random() * 256);
+    };
+    function rnd_color() {
+        //return 0xffffffff;
+        return (
+            rndint() + 256 * (
+                rndint() + 256 * (
+                    rndint() + 256 * 255
+                )
+            )
+        );
+    }
+    const random_colors = [0];  // index 0 is invisible
+    for (let i=0; i<100; i++) {
+        random_colors.push(rnd_color());
+    }
+
+    //const file_path = "./cammy.bin";
+    const file_path = "../sample_data/segmentation.bin";
+    //const file_path = "../sample_data/mri.bin";
+    //const file_path = "../waves.bin";
+    const pipeline = new mix_test.MixPipeline(
+        file_path, random_colors, canvas);
+
+    function onslide() {
+        const threshold = null;
+        thresholdValue.textContent = threshold;
+        pipeline.change_parameters(null, threshold);
+    };
+
+    function button_click() {
+        pipeline.debug_button_callback();
+    };
+    window.button_click = button_click;
+
+    //thresholdSlider.addEventListener('input', onslide);
+
+    //onslide();
+    pipeline.run();
+</script>
+
+</body>
+</html>
