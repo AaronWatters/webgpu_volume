@@ -25,7 +25,6 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     let outputShape = outputDB.shape;
     let outputLocation = depth_buffer_indices(outputOffset, outputShape);
     if (outputLocation.valid) {
-        // XXXX THIS SHOULD USE OFFSETS IN THE OUTPUT BUFFER REFERENCE FRAME
         var inputGeometry = inputVolume.geometry;
         var output_value = parms.default_value;
         var offset_sum = vec3f(0.0f, 0.0f, 0.0f);
@@ -41,32 +40,37 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
             vec3u(1,2,0),
             vec3u(2,0,1),
         );
-        for (var q=0; q<3; q++) {
-            let combo = combinations[q];
-            let M = combo[0];
-            let N = combo[1];
-            let P = combo[2];
-            for (var m_shift=-1; m_shift<=1; m_shift++) {
-                for (var n_shift=-1; n_shift<=1; n_shift++) {
-                    var xyz_shift = xyz;
-                    xyz_shift[M] += f32(m_shift);
-                    xyz_shift[N] += f32(n_shift);
-                    var left = xyz_shift;
-                    var right = xyz_shift;
-                    left[P] += 1.0;
-                    right[P] -= 1.0;
-                    let left_offset = offset_of_xyz(left, &inputGeometry);
-                    let right_offset = offset_of_xyz(right, &inputGeometry);
-                    offsets_are_valid = 
-                        offsets_are_valid && 
-                        left_offset.is_valid && right_offset.is_valid;
-                    if (offsets_are_valid) {
-                        let left_value_u32 = inputVolume.content[left_offset.offset];
-                        let right_value_u32 = inputVolume.content[right_offset.offset];
-                        let weight = bitcast<f32>(left_value_u32) - bitcast<f32>(right_value_u32);
-                        let vector = (left - right);
-                        offset_sum += weight * vector;
-                    } // don't break otherwise -- set of measure 0
+        if (offsets_are_valid) {
+            for (var q=0; q<3; q++) {
+                let combo = combinations[q];
+                let M = combo[0];
+                let N = combo[1];
+                let P = combo[2];
+                for (var m_shift=-1; m_shift<=1; m_shift++) {
+                    for (var n_shift=-1; n_shift<=1; n_shift++) {
+                        let vector_center_offset = input_offset.offset;
+                        let vector_center_indices = index_of(vector_center_offset, &inputGeometry);
+                        var left_indices = vector_center_indices.ijk;
+                        var right_indices = vector_center_indices.ijk;
+                        left_indices[P] += 1u;
+                        if (right_indices[P] == 0) {
+                            offsets_are_valid = false;
+                        } else {
+                            right_indices[P] = u32(i32(right_indices[P]) - 1);
+                            let left_offset = offset_of(left_indices, &inputGeometry);
+                            let right_offset = offset_of(right_indices, &inputGeometry);
+                            offsets_are_valid = offsets_are_valid && left_offset.is_valid && right_offset.is_valid;
+                            if (offsets_are_valid) {
+                                let left_point = to_model(left_indices, &inputGeometry);
+                                let right_point = to_model(right_indices, &inputGeometry);
+                                let left_value_u32 = inputVolume.content[left_offset.offset];
+                                let right_value_u32 = inputVolume.content[right_offset.offset];
+                                let weight = bitcast<f32>(left_value_u32) - bitcast<f32>(right_value_u32);
+                                let vector = (left_point - right_point);
+                                offset_sum += weight * vector;
+                            }
+                        } // don't break: set of measure 0
+                    }
                 }
             }
         }
