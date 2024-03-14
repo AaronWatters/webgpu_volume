@@ -76,6 +76,8 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         }
         if (offsets_are_valid) {
             let L = length(offset_sum);
+            // default to white for 0 normal
+            output_value = 4294967295u;
             if (L > 1e-10) {
                 let N = normalize(offset_sum);
                 // xxx should clamp?
