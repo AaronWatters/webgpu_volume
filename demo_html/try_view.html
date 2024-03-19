@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test of ViewVolume</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .slider-container {
+        width: 550px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: left;
+        margin-top: 10px;
+    }
+    .slider {
+        width: 500px;
+        margin: 20px auto;
+    }
+</style>
+</head>
+<body>
+
+<h1>Test of ViewVolume</h1>
+
+<canvas id="canvas" width="1000" height="1000"></canvas>
+
+<br>
+
+<button onclick="button_click()">debug button</button>
+
+<script type="module">
+    import * as MaxView from "../lib/actions/MaxView.js";
+    import * as CPUVolume from "../lib/data_objects/CPUVolume.js";
+    import * as GPUContext from "../lib/support/GPUContext.js";
+
+    //const file_path = "../cammy.bin";
+    //const file_path = "../sample_data/segmentation.bin";
+    const file_path = "../sample_data/im8.bin";
+    //const file_path = "../sample_data/mri.bin";
+    //const file_path = "../waves.bin";
+ 
+    var context, view, cpu_volume, volume;
+    const canvas = document.getElementById('canvas');
+
+    async function go() {
+        const kind = Float32Array;
+        cpu_volume = await CPUVolume.fetch_volume_prefixed(file_path, kind);
+        context = new GPUContext.Context();
+        await context.connect();
+        const [dK, dJ, dI] = [1.4, 1, 1.2];
+        volume = cpu_volume.gpu_volume(context, dK, dJ, dI);
+        view = new MaxView.Max(volume);
+        view.paint_on(canvas, true);
+    };
+    go();
+</script>
+
+</body>
+</html>
