@@ -1,12 +1,13 @@
 
 // Project a volume by max value onto a depth buffer (suffix)
 // Assumes prefixes: 
-//  panel_buffer.wgsl
+//  depth_buffer.wgsl
 //  volume_frame.wgsl
+//  volume_intercept.wgsl
 
 struct parameters {
     ijk2xyz : mat4x4f,
-    k_limit: u32,
+    int3: Intersections3,
     //default_depth: f32, -- implicit in outputDB
     //default_value: f32,
 }
@@ -30,25 +31,36 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         var inputGeometry = inputVolume.geometry;
         var current_value = outputShape.default_value;
         var current_depth = outputShape.default_depth;
-        for (var depth = 0u; depth < parms.k_limit; depth += 1u) {
-            let ijkw = vec4u(vec2u(outputLocation.ij), depth, 1u);
-            let f_ijk = vec4f(ijkw);
-            let xyz_probe = parms.ijk2xyz * f_ijk;
-            let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);
-            if (input_offset.is_valid) {
-                let valueu32 = inputVolume.content[input_offset.offset];
-                let value = bitcast<f32>(valueu32);
-                if ((!initial_value_found) || (value > current_value)) {
-                    current_depth = f32(depth) * dk;
-                    current_value = value;
-                    initial_value_found = true;
+        let offsetij = vec2i(outputLocation.ij);
+        let ijk2xyz = parms.ijk2xyz;
+        var end_points = scan_endpoints(
+            offsetij,
+            parms.int3,
+            &inputGeometry,
+            ijk2xyz,
+        );
+        if (end_points.is_valid) {
+            for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += 1) {
+                //let ijkw = vec4i(offsetij, depth, 1);
+                //let f_ijk = vec4f(ijkw);
+                //let xyz_probe = parms.ijk2xyz * f_ijk;
+                let xyz_probe = probe_point(offsetij, depth, ijk2xyz);
+                let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);
+                if (input_offset.is_valid) {
+                    let valueu32 = inputVolume.content[input_offset.offset];
+                    let value = bitcast<f32>(valueu32);
+                    if ((!initial_value_found) || (value > current_value)) {
+                        current_depth = f32(depth) * dk;
+                        current_value = value;
+                        initial_value_found = true;
+                    }
+                    // debug
+                    //let t = outputOffset/2u;
+                    //if (t * 2 == outputOffset) {
+                    //    current_value = bitcast<f32>(inputVolume.content[0]);
+                    //}
+                    // end debug
                 }
-                // debug
-                //let t = outputOffset/2u;
-                //if (t * 2 == outputOffset) {
-                //    current_value = bitcast<f32>(inputVolume.content[0]);
-                //}
-                // end debug
             }
         }
         outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;
