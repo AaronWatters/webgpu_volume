@@ -1,9 +1,6 @@
 
 // Framework for image volume data in WebGPU.
 
-// replace the following line to get other content types.
-
-//alias ContentType=u32;
 
 struct VolumeGeometry {
     // Volume dimensions. IJK + error indicator.
@@ -19,19 +16,7 @@ struct VolumeU32 {
     content : array<u32>
 }
 
-alias Volume=VolumeU32;
-
-/*
-struct VolumeU32 {
-    geometry : VolumeGeometry,
-    content : array<u32>=
-}
-
-struct VolumeU8 {
-    geometry : VolumeGeometry,
-    content : array<u32>
-}
-*/
+alias Volume = VolumeU32;
 
 struct IndexOffset {
     offset : u32,
