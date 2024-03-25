@@ -49,11 +49,13 @@
     const canvas = document.getElementById('canvas');
 
     async function go() {
+        //debugger;
         const kind = Float32Array;
         cpu_volume = await CPUVolume.fetch_volume_prefixed(file_path, kind);
         context = new GPUContext.Context();
         await context.connect();
-        const [dK, dJ, dI] = [1.4, 1, 1.2];
+        //const [dK, dJ, dI] = [4, .4, 1];
+        const [dK, dJ, dI] = [1,1,1];
         volume = cpu_volume.gpu_volume(context, dK, dJ, dI);
         view = new MaxView.Max(volume);
         view.paint_on(canvas, true);
