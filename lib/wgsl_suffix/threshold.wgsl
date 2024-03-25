@@ -8,7 +8,9 @@
 struct parameters {
     ijk2xyz : mat4x4f,
     int3: Intersections3,
+    dk: f32,
     threshold_value: f32,
+    // 2 float padding at end...???
 }
 
 @group(0) @binding(0) var<storage, read> inputVolume : Volume;
@@ -24,7 +26,8 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     let outputShape = outputDB.shape;
     let outputLocation = depth_buffer_indices(outputOffset, outputShape);
     // k increment length in xyz space
-    let dk = 1.0f;  // fix this! -- k increment length in xyz space
+    //let dk = 1.0f;  // fix this! -- k increment length in xyz space
+    let dk = parms.dk;
     var initial_value_found = false;
     var compare_diff: f32;
     var threshold_crossed = false;
@@ -42,11 +45,12 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
             ijk2xyz,
         );
         if (end_points.is_valid) {
-            for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += 1) {
+            let offsetij_f = vec2f(offsetij);
+            for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += dk) {
                 //let ijkw = vec4u(vec2u(outputLocation.ij), depth, 1u);
                 //let f_ijk = vec4f(ijkw);
                 //let xyz_probe = parms.ijk2xyz * f_ijk;
-                let xyz_probe = probe_point(offsetij, depth, ijk2xyz);
+                let xyz_probe = probe_point(offsetij_f, depth, ijk2xyz);
                 let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);
                 if ((input_offset.is_valid) && (!threshold_crossed)) {
                     let valueu32 = inputVolume.content[input_offset.offset];
@@ -55,7 +59,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
                     if ((initial_value_found) && (!threshold_crossed)) {
                         if (compare_diff * diff <= 0.0f) {
                             threshold_crossed = true;
-                            current_depth = f32(depth) * dk;
+                            current_depth = f32(depth);
                             current_value = value;
                             break;
                         }

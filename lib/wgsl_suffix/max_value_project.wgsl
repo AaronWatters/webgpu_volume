@@ -8,8 +8,8 @@
 struct parameters {
     ijk2xyz : mat4x4f,
     int3: Intersections3,
-    //default_depth: f32, -- implicit in outputDB
-    //default_value: f32,
+    dk: f32,  // k increment for probe
+    // 3 floats padding at end...???
 }
 
 @group(0) @binding(0) var<storage, read> inputVolume : Volume;
@@ -25,7 +25,8 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     let outputShape = outputDB.shape;
     let outputLocation = depth_buffer_indices(outputOffset, outputShape);
     // k increment length in xyz space
-    let dk = 1.0f;  // fix this! -- k increment length in xyz space
+    //let dk = 1.0f;  // fix this! -- k increment length in xyz space
+    let dk = parms.dk;
     var initial_value_found = false;
     if (outputLocation.valid) {
         var inputGeometry = inputVolume.geometry;
@@ -40,17 +41,18 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
             ijk2xyz,
         );
         if (end_points.is_valid) {
-            for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += 1) {
+            let offsetij_f = vec2f(offsetij);
+            for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += dk) {
                 //let ijkw = vec4i(offsetij, depth, 1);
                 //let f_ijk = vec4f(ijkw);
                 //let xyz_probe = parms.ijk2xyz * f_ijk;
-                let xyz_probe = probe_point(offsetij, depth, ijk2xyz);
+                let xyz_probe = probe_point(offsetij_f, depth, ijk2xyz);
                 let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);
                 if (input_offset.is_valid) {
                     let valueu32 = inputVolume.content[input_offset.offset];
                     let value = bitcast<f32>(valueu32);
                     if ((!initial_value_found) || (value > current_value)) {
-                        current_depth = f32(depth) * dk;
+                        current_depth = f32(depth);
                         current_value = value;
                         initial_value_found = true;
                     }
