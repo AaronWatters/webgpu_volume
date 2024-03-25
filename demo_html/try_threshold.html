@@ -45,14 +45,15 @@
     const thresholdValue = document.getElementById('threshold-value');
 
 
-    //const file_path = "./cammy.bin";
+    //const file_path = "../cammy.bin";
     const file_path = "../sample_data/im8.bin";
     //const file_path = "../sample_data/mri.bin";
     //const file_path = "../waves.bin";
     const pipeline = new threshold_test.ThresholdPipeline(
         file_path, canvas, thresholdSlider);
 
-    function onslide() {
+    async function onslide() {
+        await pipeline.volume_future;
         const threshold = thresholdSlider.value;
         thresholdValue.textContent = threshold;
         pipeline.change_parameters(null, threshold);
