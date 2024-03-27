@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Segmentation with shading</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .slider-container {
+        width: 550px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: left;
+        margin-top: 10px;
+    }
+    .slider {
+        width: 500px;
+        margin: 20px auto;
+    }
+</style>
+</head>
+<body>
+
+<h1>Segmentation with shading</h1>
+
+<div class="slider-container">
+    <input type="range" min="0" max="1" step="0.01" id="ratio-slider" class="slider">
+    <div class="slider-label">
+        <span>blend ratio: &nbsp;</span>
+        <span id="ratio-value">0</span>
+    </div>
+</div>
+
+<canvas id="canvas" width="1000" height="1000"></canvas>
+
+<br>
+
+<button onclick="button_click()">debug button</button>
+
+<script type="module">
+    import * as MixView from "../lib/actions/MixView.js";
+    import * as CPUVolume from "../lib/data_objects/CPUVolume.js";
+    import * as GPUContext from "../lib/support/GPUContext.js";
+
+    function rndint() {
+        return Math.floor(Math.random() * 256);
+    };
+    function rnd_color() {
+        //return 0xffffffff;
+        return (
+            rndint() + 256 * (
+                rndint() + 256 * (
+                    rndint() + 256 * 255
+                )
+            )
+        );
+    }
+    const random_colors = [0];  // index 0 is invisible
+    for (let i=0; i<100; i++) {
+        random_colors.push(rnd_color());
+    }
+
+    //const file_path = "./cammy.bin";
+    const file_path = "../sample_data/segmentation.bin";
+    //const file_path = "../sample_data/mri.bin";
+    //const file_path = "../waves.bin";
+    const ratio = 0.7;
+
+    const ratioSlider = document.getElementById('ratio-slider');
+    const ratioValue = document.getElementById('ratio-value');
+    ratioSlider.value = ratio;
+    ratioValue.textContent = ratio;
+
+    var context, view, cpu_volume, volume;
+    const canvas = document.getElementById('canvas');
+
+    async function go() {
+        debugger;
+        const kind = Uint32Array;
+        cpu_volume = await CPUVolume.fetch_volume_prefixed(file_path, kind);
+        context = new GPUContext.Context();
+        await context.connect();
+        const [dK, dJ, dI] = [1,1,1];
+        //const [dK, dJ, dI] = [.2,1,.5];
+        volume = cpu_volume.gpu_volume(context, dK, dJ, dI);
+        const colors = new Uint32Array(random_colors);
+        view = new MixView.Mix(volume, colors, ratio);
+        view.paint_on(canvas, true);
+    };
+    go();
+
+    function onslide() {
+        const ratio = ratioSlider.value;
+        ratioValue.textContent = ratio;
+        //pipeline.change_parameters(null, ratio);
+        view.change_ratio(ratio);
+    };
+    ratioSlider.addEventListener('input', onslide);
+
+</script>
+
+</body>
+</html>
