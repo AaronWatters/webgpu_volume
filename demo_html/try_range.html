@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test of DepthBufferRange</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .slider-container {
+        width: 550px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: left;
+        margin-top: 10px;
+    }
+    .slider {
+        width: 500px;
+        margin: 20px auto;
+    }
+</style>
+</head>
+<body>
+
+<h1>Test of DepthBufferRange</h1>
+
+<div class="slider-container">
+    <input type="range" min="0" max="0" id="depth-slider" class="slider">
+    <div class="slider-label">
+        <span>depth: &nbsp;</span>
+        <span id="depth-value">0</span>
+    </div>
+</div>
+
+<canvas id="canvas" width="1000" height="1000"></canvas>
+
+<br>
+
+<button onclick="button_click()">debug button</button>
+
+<script type="module">
+    import * as depth_range_view from "../lib/proofs_of_concepts/depth_range_view.js";
+    import * as CPUVolume from "../lib/data_objects/CPUVolume.js";
+    import * as GPUContext from "../lib/support/GPUContext.js";
+
+    //const file_path = "../cammy.bin";
+    //const file_path = "../sample_data/segmentation.bin";
+    const file_path = "../sample_data/im8.bin";
+    //const file_path = "../sample_data/mri.bin";
+    //const file_path = "../waves.bin";
+ 
+    var context, view, cpu_volume, volume;
+    const canvas = document.getElementById('canvas');
+    const depthSlider = document.getElementById('depth-slider');
+    const depthValue = document.getElementById('depth-value');
+
+    async function go() {
+        //debugger;
+        const kind = Float32Array;
+        cpu_volume = await CPUVolume.fetch_volume_prefixed(file_path, kind);
+        context = new GPUContext.Context();
+        await context.connect();
+        //const [dK, dJ, dI] = [4, .4, 1];
+        const [dK, dJ, dI] = [1,1,1];
+        volume = cpu_volume.gpu_volume(context, dK, dJ, dI);
+        view = new depth_range_view.TestRangeView(volume);
+        view.paint_on(canvas, true);
+        view.on_range_change(range_callback);
+        depthSlider.value = view.current_depth;
+        depthSlider.addEventListener('input', onslide);
+    };
+
+    async function onslide() {
+        //await pipeline.volume_future;
+        const depth = depthSlider.value;
+        console.log("onslide at depth", depth);
+        //debugger;
+        depthValue.textContent = depth;
+        //pipeline.change_parameters(null, threshold);
+        view.change_depth(depth);
+    };
+
+    function range_callback(min_depth, max_depth) {
+        depthSlider.min = min_depth;
+        depthSlider.max = max_depth;
+        const depth = depthSlider.value;
+        if (min_depth > depth) {
+            depthSlider.value = min_depth;
+            onslide();
+        } else if (max_depth < depth) {
+            depthSlider.value = max_depth;
+            onslide();
+        }
+    };
+
+    go();
+</script>
+
+</body>
+</html>
