@@ -2,9 +2,9 @@
 // suffix for pasting one panel onto another
 
 struct parameters {
+    ratios: vec4f,
     in_hw: vec2u,
     out_hw: vec2u,
-    ratio: f32,
 }
 
 // Input and output panels interpreted as u32 rgba
@@ -27,8 +27,9 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         let out_u32 = outputBuffer[out_location.offset];
         let in_color = unpack4x8unorm(in_u32);
         let out_color = unpack4x8unorm(out_u32);
-        let ratio = parms.ratio;
-        let mix_color = ((1.0f - ratio) * out_color) + (ratio * in_color);
+        let ratios = parms.ratios;
+        const ones = vec4f(1.0, 1.0, 1.0, 1.0);
+        let mix_color = ((ones - ratios) * out_color) + (ratios * in_color);
         let mix_value = f_pack_color(mix_color.xyz);
         outputBuffer[out_location.offset] = mix_value;
     }
