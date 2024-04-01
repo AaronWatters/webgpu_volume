@@ -139,6 +139,10 @@
       };
     }
   }
+  const GPUDataObject = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    DataObject
+  }, Symbol.toStringTag, { value: "Module" }));
   function v_zero(n) {
     const b = new Float64Array(n);
     return Array.from(b);
@@ -428,7 +432,7 @@
     0,
     1
   ];
-  class Volume extends DataObject {
+  let Volume$1 = class Volume2 extends DataObject {
     constructor(shape, data, ijk2xyz, data_format) {
       super();
       data_format = data_format || Uint32Array;
@@ -449,7 +453,7 @@
     }
     same_geometry(context2) {
       context2 = context2 || this.context;
-      const result = new Volume(this.shape.slice(0, 3), null, this.matrix, this.data_format);
+      const result = new Volume2(this.shape.slice(0, 3), null, this.matrix, this.data_format);
       result.attach_to_context(context2);
       return result;
     }
@@ -530,10 +534,10 @@
       this.data = mappedInts.slice(this.content_offset);
       return this.data;
     }
-  }
+  };
   const GPUVolume = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
-    Volume
+    Volume: Volume$1
   }, Symbol.toStringTag, { value: "Module" }));
   const volume_frame = "\n// Framework for image volume data in WebGPU.\n\n\nstruct VolumeGeometry {\n    // Volume dimensions. IJK + error indicator.\n    shape : vec4u,\n    // Convert index space to model space,\n    ijk2xyz : mat4x4f,\n    // Inverse: convert model space to index space.\n    xyz2ijk : mat4x4f\n}\n\nstruct VolumeU32 {\n    geometry : VolumeGeometry,\n    content : array<u32>\n}\n\nalias Volume = VolumeU32;\n\nstruct IndexOffset {\n    offset : u32,\n    is_valid : bool\n}\n\nstruct OffsetIndex {\n    ijk: vec3u,\n    is_valid: bool\n}\n\n// Buffer offset for volume index ijk.\nfn offset_of(ijk : vec3u, geom : ptr<function, VolumeGeometry>) -> IndexOffset {\n    var result : IndexOffset;\n    var shape = (*geom).shape.xyz;\n    //result.is_valid = all(ijk.zxy < shape);\n    result.is_valid = all(ijk.xyz < shape);\n    if (result.is_valid) {\n        let layer = ijk.x;\n        let row = ijk.y;\n        let column = ijk.z;\n        let height = shape.y;\n        let width = shape.z;\n        result.offset = (layer * height + row) * width + column;\n    }\n    return result;\n}\n\n// Convert array offset to checked ijk index\nfn index_of(offset: u32, geom : ptr<function, VolumeGeometry>) -> OffsetIndex {\n    var result : OffsetIndex;\n    result.is_valid = false;\n    var shape = (*geom).shape;\n    let depth = shape.x;\n    let height = shape.y;\n    let width = shape.z;\n    let LR = offset / width;\n    let column = offset - (LR * width);\n    let layer = LR / height;\n    let row = LR - (layer * height);\n    if (layer < depth) {\n        result.ijk.x = layer;\n        result.ijk.y = row;\n        result.ijk.z = column;\n        result.is_valid = true;\n    }\n    return result;\n}\n\n// Convert float vector indices to checked unsigned index\nfn offset_of_f(ijk_f : vec3f, geom : ptr<function, VolumeGeometry>) -> IndexOffset {\n    var shape = (*geom).shape;\n    var result : IndexOffset;\n    result.is_valid = false;\n    if (all(ijk_f >= vec3f(0.0, 0.0, 0.0)) && all(ijk_f < vec3f(shape.xyz))) {\n        result = offset_of(vec3u(ijk_f), geom);\n    }\n    return result;\n}\n\n// Convert model xyz to index space (as floats)\nfn to_index_f(xyz : vec3f, geom : ptr<function, VolumeGeometry>) -> vec3f {\n    var xyz2ijk = (*geom).xyz2ijk;\n    let xyz1 = vec4f(xyz, 1.0);\n    let ijk1 = xyz2ijk * xyz1;\n    return ijk1.xyz;\n}\n\n// Convert index floats to model space.\nfn to_model_f(ijk_f : vec3f, geom : ptr<function, VolumeGeometry>) -> vec3f {\n    var ijk2xyz = (*geom).ijk2xyz;\n    let ijk1 = vec4f(ijk_f, 1.0);\n    let xyz1 = ijk2xyz * ijk1;\n    return xyz1.xyz;\n}\n\n// Convert unsigned int indices to model space.\nfn to_model(ijk : vec3u, geom : ptr<function, VolumeGeometry>) -> vec3f {\n    return to_model_f(vec3f(ijk), geom);\n}\n\n// Convert xyz model position to checked index offset.\nfn offset_of_xyz(xyz : vec3f, geom : ptr<function, VolumeGeometry>) -> IndexOffset {\n    return offset_of_f(to_index_f(xyz, geom), geom);\n}";
   const depth_buffer$1 = '\n// Framework for 4 byte depth buffer\n\n// keep everything f32 for simplicity of transfers\n\nstruct depthShape {\n    height: f32,\n    width: f32,\n    // "null" marker depth and value.\n    default_depth: f32,\n    default_value: f32,\n}\n\nfn is_default(value: f32, depth:f32, for_shape: depthShape) -> bool {\n    return (for_shape.default_depth == depth) && (for_shape.default_value == value);\n}\n\nstruct DepthBufferF32 {\n    // height/width followed by default depth and default value.\n    shape: depthShape,\n    // content data followed by depth as a single array\n    data_and_depth: array<f32>,\n}\n\nstruct BufferLocation {\n    data_offset: u32,\n    depth_offset: u32,\n    ij: vec2i,\n    valid: bool,\n}\n\n// 2d u32 indices to array locations\nfn depth_buffer_location_of(ij: vec2i, shape: depthShape) -> BufferLocation {\n    var result : BufferLocation;\n    result.ij = ij;\n    let width = u32(shape.width);\n    let height = u32(shape.height);\n    let row = ij.x;\n    let col = ij.y;\n    let ucol = u32(col);\n    let urow = u32(row);\n    result.valid = ((row >= 0) && (col >= 0) && (urow < height) && (ucol < width));\n    if (result.valid) {\n        result.data_offset = urow * width + ucol;\n        result.depth_offset = height * width + result.data_offset;\n    }\n    return result;\n}\n\n// 2d f32 indices to array locations\nfn f_depth_buffer_location_of(xy: vec2f, shape: depthShape) -> BufferLocation {\n    return depth_buffer_location_of(vec2i(xy.xy), shape);\n}\n\nfn depth_buffer_indices(data_offset: u32, shape: depthShape) -> BufferLocation {\n    var result : BufferLocation;\n    let width = u32(shape.width);\n    let height = u32(shape.height);\n    let size = width * height;\n    result.valid = (data_offset < size);\n    if (result.valid) {\n        result.data_offset = data_offset;\n        result.depth_offset = size + data_offset;\n        let row = data_offset / width;\n        let col = data_offset - (row * width);\n        result.ij = vec2i(i32(row), i32(col));\n    }\n    return result;\n}';
@@ -577,6 +581,13 @@
       }
     }
   }
+  const GPUAction = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    Action,
+    ActionSequence,
+    depth_shader_code,
+    volume_shader_code
+  }, Symbol.toStringTag, { value: "Module" }));
   const embed_volume = "\n// Suffix for testing frame operations.\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputVolume : Volume;\n\n// xxxx add additional transform matrix\n\n@compute @workgroup_size(8)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    var inputGeometry = inputVolume.geometry;\n    let inputOffset = global_id.x;\n    let inputIndex = index_of(inputOffset, &inputGeometry);\n    if (inputIndex.is_valid) {\n        var outputGeometry = outputVolume.geometry;\n        let xyz = to_model(inputIndex.ijk, &inputGeometry);\n        let out_offset = offset_of_xyz(xyz, &outputGeometry);\n        if (out_offset.is_valid) {\n            outputVolume.content[out_offset.offset] = inputVolume.content[inputOffset];\n        }\n    }\n}";
   class SampleVolume extends Action {
     constructor(shape, ijk2xyz, volumeToSample) {
@@ -584,7 +595,7 @@
       this.volumeToSample = volumeToSample;
       this.shape = shape;
       this.ijk2xyz = ijk2xyz;
-      this.targetVolume = new Volume(shape, null, ijk2xyz);
+      this.targetVolume = new Volume$1(shape, null, ijk2xyz);
     }
     attach_to_context(context2) {
       const device = context2.device;
@@ -715,12 +726,12 @@
     }
   }
   class ImagePainter {
-    constructor(rgbaImage, width, height, to_canvas) {
+    constructor(rgbaImage, width, height, to_canvas2) {
       if (rgbaImage.byteLength == width * height) {
         rgbaImage = grey_to_rgba(rgbaImage);
       }
       var that = this;
-      that.to_canvas = to_canvas;
+      that.to_canvas = to_canvas2;
       that.context = new Context();
       that.rgbaImage = rgbaImage;
       that.width = width;
@@ -746,17 +757,17 @@
     }
   }
   class PaintPanel extends Action {
-    constructor(panel2, to_canvas) {
+    constructor(panel2, to_canvas2) {
       super();
       this.panel = panel2;
-      this.to_canvas = to_canvas;
+      this.to_canvas = to_canvas2;
       this.uniforms = new PaintPanelUniforms(panel2);
     }
     attach_to_context(context2) {
       this.context = context2;
       const device = context2.device;
-      const to_canvas = this.to_canvas;
-      this.webgpu_context = to_canvas.getContext("webgpu");
+      const to_canvas2 = this.to_canvas;
+      this.webgpu_context = to_canvas2.getContext("webgpu");
       const format = navigator.gpu.getPreferredCanvasFormat();
       this.webgpu_context.configure({ device, format });
       if (!this.panel.attached) {
@@ -886,6 +897,10 @@
       passEncoder.end();
     }
   }
+  const UpdateAction$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    UpdateAction
+  }, Symbol.toStringTag, { value: "Module" }));
   const epsilon = 1e-15;
   function intersection_buffer(orbitMatrix, volume2) {
     const result = new Float32Array(3 * 4 + 4);
@@ -946,6 +961,11 @@
       return [Math.ceil(this.target.size / 256), 1, 1];
     }
   }
+  const Projection = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    Project,
+    intersection_buffer
+  }, Symbol.toStringTag, { value: "Module" }));
   const volume_intercepts = "\n// Logic for loop boundaries in volume scans.\n// This prefix assumes volume_frame.wgsl and depth_buffer.wgsl.\n\n// v2 planar xyz intersection parameters:\n// v2 ranges from c0 * v0 + c1 * v1 + low to ... + high\nstruct Intersection2 {\n    c0: f32,\n    c1: f32,\n    low: f32,\n    high: f32,\n}\n\n// Intersection parameters for box borders\nalias Intersections3 = array<Intersection2, 3>;\n\n// Intersection end points\nstruct Endpoints2 {\n    offset: vec2f,\n    is_valid: bool,\n}\n\nfn scan_endpoints(\n    offset: vec2i, \n    int3: Intersections3, \n    geom_ptr: ptr<function, VolumeGeometry>, \n    ijk2xyz: mat4x4f,  // orbit to model affine matrix\n) -> Endpoints2 {\n    var initialized = false;\n    var result: Endpoints2;\n    result.is_valid = false;\n    for (var index=0; index<3; index++) {\n        let intersect = int3[index];\n        let ep = intercepts2(offset, intersect);\n        if (ep.is_valid) {\n            if (!initialized) {\n                result = ep;\n                initialized = true;\n            } else {\n                result = intersect2(result, ep);\n            }\n        }\n    }\n    if (result.is_valid) {\n        // verify that midpoint lies inside geometry\n        let low = result.offset[0];\n        let high = result.offset[1];\n        let mid = (low + high) / 2;\n        let mid_probe = probe_point(vec2f(offset), mid, ijk2xyz);\n        //let low_probe = probe_point(offset, low, ijk2xyz);\n        //let high_probe = probe_point(offset, high, ijk2xyz);\n        //let mid_probe = 0.5 * (low_probe + high_probe);\n        //let mid_probe = low_probe; // debugging\n        let mid_offset = offset_of_xyz(mid_probe, geom_ptr);\n        result.is_valid = mid_offset.is_valid;\n        // DEBUGGING\n        result.is_valid = true;\n    }\n    return result;\n}\n\nfn probe_point(offset: vec2f, depth: f32, ijk2xyz: mat4x4f) -> vec3f {\n    let ijkw = vec4f(vec2f(offset), f32(depth), 1.0);\n    let xyzw = ijk2xyz * ijkw;\n    return xyzw.xyz;\n}\n\nfn intercepts2(offset: vec2i, intc: Intersection2) -> Endpoints2 {\n    var result: Endpoints2;\n    let x = (intc.c0 * f32(offset[0])) + (intc.c1 * f32(offset[1]));\n    let high = floor(x + intc.high);\n    let low = ceil(x + intc.low);\n    result.is_valid = (high > low);\n    result.offset = vec2f(low, high);\n    return result;\n}\n\nfn intersect2(e1: Endpoints2, e2: Endpoints2) -> Endpoints2 {\n    var result = e1;\n    if (!e1.is_valid) {\n        result = e2;\n    } else {\n        if (e2.is_valid) {\n            let low = max(e1.offset[0], e2.offset[0]);\n            let high = min(e1.offset[1], e2.offset[1]);\n            result.offset = vec2f(low, high);\n            result.is_valid = (low <= high);\n        }\n    }\n    return result;\n}\n";
   const max_value_project = "\n// Project a volume by max value onto a depth buffer (suffix)\n// Assumes prefixes: \n//  depth_buffer.wgsl\n//  volume_frame.wgsl\n//  volume_intercept.wgsl\n\nstruct parameters {\n    ijk2xyz : mat4x4f,\n    int3: Intersections3,\n    dk: f32,  // k increment for probe\n    // 3 floats padding at end...???\n}\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    //let local_parms = parms;\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    // k increment length in xyz space\n    //let dk = 1.0f;  // fix this! -- k increment length in xyz space\n    let dk = parms.dk;\n    var initial_value_found = false;\n    if (outputLocation.valid) {\n        var inputGeometry = inputVolume.geometry;\n        var current_value = outputShape.default_value;\n        var current_depth = outputShape.default_depth;\n        let offsetij = vec2i(outputLocation.ij);\n        let ijk2xyz = parms.ijk2xyz;\n        var end_points = scan_endpoints(\n            offsetij,\n            parms.int3,\n            &inputGeometry,\n            ijk2xyz,\n        );\n        if (end_points.is_valid) {\n            let offsetij_f = vec2f(offsetij);\n            for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += dk) {\n                //let ijkw = vec4i(offsetij, depth, 1);\n                //let f_ijk = vec4f(ijkw);\n                //let xyz_probe = parms.ijk2xyz * f_ijk;\n                let xyz_probe = probe_point(offsetij_f, depth, ijk2xyz);\n                let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);\n                if (input_offset.is_valid) {\n                    let valueu32 = inputVolume.content[input_offset.offset];\n                    let value = bitcast<f32>(valueu32);\n                    if ((!initial_value_found) || (value > current_value)) {\n                        current_depth = f32(depth);\n                        current_value = value;\n                        initial_value_found = true;\n                    }\n                    // debug\n                    //let t = outputOffset/2u;\n                    //if (t * 2 == outputOffset) {\n                    //    current_value = bitcast<f32>(inputVolume.content[0]);\n                    //}\n                    // end debug\n                }\n            }\n        }\n        outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;\n        outputDB.data_and_depth[outputLocation.data_offset] = current_value;\n    }\n}\n";
   class MaxProjectionParameters extends DataObject {
@@ -985,6 +1005,10 @@
     //    return [Math.ceil(this.target.size / 256), 1, 1];
     //};
   }
+  const MaxProjection = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    MaxProject
+  }, Symbol.toStringTag, { value: "Module" }));
   class CopyData extends Action {
     constructor(fromDataObject, from_offset, toDataObject, to_offset, length) {
       super();
@@ -1005,6 +1029,10 @@
       );
     }
   }
+  const CopyAction = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    CopyData
+  }, Symbol.toStringTag, { value: "Module" }));
   class DepthBuffer extends DataObject {
     constructor(shape, default_depth, default_value, data, depths, data_format) {
       super();
@@ -1086,6 +1114,10 @@
       return this.data;
     }
   }
+  const GPUDepthBuffer = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    DepthBuffer
+  }, Symbol.toStringTag, { value: "Module" }));
   const convert_gray_prefix = "\n// Prefix for converting f32 to rgba gray values.\n// Prefix for convert_buffer.wgsl\n\nstruct parameters {\n    input_start: u32,\n    output_start: u32,\n    length: u32,\n    min_value: f32,\n    max_value: f32,\n}\n\nfn new_out_value(in_value: u32, out_value: u32, parms: parameters) -> u32 {\n    let in_float = bitcast<f32>(in_value);\n    let min_value = parms.min_value;\n    let max_value = parms.max_value;\n    let in_clamp = clamp(in_float, min_value, max_value);\n    let intensity = (in_clamp - min_value) / (max_value - min_value);\n    let gray_level = u32(intensity * 255.0);\n    //let color = vec4u(gray_level, gray_level, gray_level, 255u);\n    //let result = pack4xU8(color); ???error: unresolved call target 'pack4xU8'\n    let result = gray_level + 256 * (gray_level + 256 * (gray_level + 256 * 255));\n    //let result = 255u + 256 * (gray_level + 256 * (gray_level + 256 * gray_level));\n    return result;\n}";
   const convert_buffer = "\n// Suffix for converting or combining data from one data object buffer to another.\n\n// Assume that prefix defines struct parameters with members\n//   - input_start: u32\n//   - output_start: u32\n//   - length: u32\n// as well as any other members needed for conversion.\n//\n// And fn new_out_value(in_value: u32, out_value: u32, parms: parameters) -> u32 {...}\n\n\n@group(0) @binding(0) var<storage, read> inputBuffer : array<u32>;\n\n@group(1) @binding(0) var<storage, read_write> outputBuffer : array<u32>;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // make a copy of parms for local use...\n    let local_parms = parms;\n    let offset = global_id.x;\n    let length = parms.length;\n    if (offset < length) {\n        let input_start = parms.input_start;\n        let output_start = parms.output_start;\n        let input_value = inputBuffer[input_start + offset];\n        let output_index = output_start + offset;\n        let output_value = outputBuffer[output_index];\n        let new_output_value = new_out_value(input_value, output_value, local_parms);\n        outputBuffer[output_index] = new_output_value;\n    }\n}\n";
   class GrayParameters extends DataObject {
@@ -1167,6 +1199,11 @@
       this.compute_extrema();
     }
   }
+  const UpdateGray$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    ToGrayPanel,
+    UpdateGray
+  }, Symbol.toStringTag, { value: "Module" }));
   function get_context() {
     return new Context();
   }
@@ -1228,7 +1265,7 @@
     // Data object conveniences.
     volume(shape_in2, content_in, ijk2xyz_in, Float32Array2) {
       this.must_be_connected();
-      const result = new Volume(shape_in2, content_in, ijk2xyz_in, Float32Array2);
+      const result = new Volume$1(shape_in2, content_in, ijk2xyz_in, Float32Array2);
       result.attach_to_context(this);
       return result;
     }
@@ -1258,9 +1295,9 @@
       result.attach_to_context(this);
       return result;
     }
-    paint(panel2, to_canvas) {
+    paint(panel2, to_canvas2) {
       this.must_be_connected();
-      const result = new PaintPanel(panel2, to_canvas);
+      const result = new PaintPanel(panel2, to_canvas2);
       result.attach_to_context(this);
       return result;
     }
@@ -1323,7 +1360,7 @@
     ];
     const shape_out = [2, 2, 3];
     const content_out = [30, 2, 4, 6, 8, 10, 1, 3, 5, 7, 9, 11];
-    const inputVolume = new Volume(shape_in2, content_in, ijk2xyz_in);
+    const inputVolume = new Volume$1(shape_in2, content_in, ijk2xyz_in);
     inputVolume.attach_to_context(context2);
     const samplerAction = new SampleVolume(shape_out, ijk2xyz_out, inputVolume);
     samplerAction.attach_to_context(context2);
@@ -1332,8 +1369,19 @@
     console.log("expected", content_out);
     console.log("got output", resultArray);
   }
+  const sample_test = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    do_sample
+  }, Symbol.toStringTag, { value: "Module" }));
+  var context$1, to_canvas, painter$1;
   function do_paint(canvas) {
-    new ImagePainter(colors, 2, 2, canvas);
+    painter$1 = new ImagePainter(colors, 2, 2, canvas);
+  }
+  function do_paint1(canvas) {
+    console.log("painting panel asyncronously");
+    to_canvas = canvas;
+    context$1 = new Context();
+    context$1.connect_then_call(do_paint_async);
   }
   function RGBA(r, g, b, a) {
     return r * 255 + 256 * (g * 255 + 256 * (b * 255 + 256 * a * 255));
@@ -1344,6 +1392,42 @@
     RGBA(0, 0, 1, 1),
     RGBA(1, 1, 0, 1)
   ]);
+  const colors2 = new Uint32Array([
+    RGBA(0, 1, 0, 1),
+    RGBA(0, 0, 1, 1),
+    RGBA(1, 1, 0, 1),
+    RGBA(1, 0, 0, 1)
+  ]);
+  var colorsA = colors;
+  var colorsB = colors2;
+  var panel$1;
+  function do_paint_async() {
+    const width = 2;
+    const height = 2;
+    panel$1 = new Panel(width, height);
+    painter$1 = new PaintPanel(panel$1, to_canvas);
+    panel$1.attach_to_context(context$1);
+    painter$1.attach_to_context(context$1);
+    panel$1.push_buffer(colorsA);
+    painter$1.run();
+  }
+  function change_paint1(to_canvas2) {
+    [colorsA, colorsB] = [colorsB, colorsA];
+    panel$1.push_buffer(colorsA);
+    painter$1.reset(panel$1);
+    painter$1.run();
+  }
+  function change_paint(to_canvas2) {
+    [colorsA, colorsB] = [colorsB, colorsA];
+    painter$1.change_image(colorsA);
+  }
+  const paint_test = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    change_paint,
+    change_paint1,
+    do_paint,
+    do_paint1
+  }, Symbol.toStringTag, { value: "Module" }));
   const combine_depth_buffers = '\n// Suffix pasting input depth buffer over output where depth dominates\n// Requires "depth_buffer.wgsl"\n\n@group(0) @binding(0) var<storage, read> inputDB : DepthBufferF32;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> input_offset_ij_sign: vec3i;\n\n@compute @workgroup_size(8)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    if (outputLocation.valid) {\n        let inputIndices = outputLocation.ij + input_offset_ij_sign.xy;\n        let inputShape = inputDB.shape;\n        let inputLocation = depth_buffer_location_of(inputIndices, inputShape);\n        if (inputLocation.valid) {\n            var inputDepth = inputDB.data_and_depth[inputLocation.depth_offset];\n            var outputDepth = outputDB.data_and_depth[outputLocation.depth_offset];\n            var sign = input_offset_ij_sign.z;\n            if (sign == 0) {\n                sign = 1;\n            }\n            if (((inputDepth - outputDepth) * f32(sign)) > 0.0) {\n                var inputData = inputDB.data_and_depth[inputLocation.data_offset];\n                if (!is_default(inputData, inputDepth, inputShape)) {\n                    outputDB.data_and_depth[outputLocation.depth_offset] = inputDepth;\n                    outputDB.data_and_depth[outputLocation.data_offset] = inputData;\n                }\n            }\n        }\n    }\n}';
   class CombinationParameters extends DataObject {
     // xxxx possibly refactor/generalize this.
@@ -1412,6 +1496,10 @@
       passEncoder.end();
     }
   }
+  const CombineDepths$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    CombineDepths
+  }, Symbol.toStringTag, { value: "Module" }));
   function do_combine() {
     console.log("computing sample asyncronously");
     (async () => await do_combine_async())();
@@ -1489,6 +1577,10 @@
     console.log("got result", resultArray);
     console.log("outputDB", outputDB);
   }
+  const combine_test = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    do_combine
+  }, Symbol.toStringTag, { value: "Module" }));
   const panel_buffer = "\n// Framework for panel buffer structure\n// A panel consists of a buffer representing a rectangular screen region.\n// with height and width.\n\nstruct PanelOffset {\n    offset: u32,\n    ij: vec2u,\n    is_valid: bool\n}\n\nfn panel_location_of(offset: u32, height_width: vec2u)-> PanelOffset  {\n    // location of buffer offset in row/col form.\n    let height = height_width[0];\n    let width = height_width[1];\n    var result : PanelOffset;\n    result.offset = offset;\n    result.is_valid = (offset < width * height);\n    if (result.is_valid) {\n        let row = offset / width;\n        let col = offset - row * width;\n        result.ij = vec2u(row, col);\n    }\n    return result;\n}\n\nfn panel_offset_of(ij: vec2u, height_width: vec2u) -> PanelOffset {\n    // buffer offset of row/col\n    var result : PanelOffset;\n    result.is_valid = all(ij < height_width);\n    if (result.is_valid) {\n        //const height = height_width[0];\n        let width = height_width[1];\n        result.offset = ij[0] * width + ij[1];\n        result.ij = ij;\n    }\n    return result;\n}\n\nfn f_panel_offset_of(xy: vec2f, height_width: vec2u)-> PanelOffset {\n    // buffer offset of vec2f row/col\n    var result : PanelOffset;\n    result.is_valid = ((xy[0] >= 0.0) && (xy[1] >= 0.0));\n    if (result.is_valid) {\n        result = panel_offset_of(vec2u(xy), height_width);\n    }\n    return result;\n}\n\n// xxxx this should be a builtin 'pack4xU8'...\nfn f_pack_color(color: vec3f) -> u32 {\n    let ucolor = vec3u(clamp(\n        255.0 * color, \n        vec3f(0.0, 0.0, 0.0),\n        vec3f(255.0, 255.0, 255.0)));\n    return ucolor[0] + \n        256u * (ucolor[1] + 256u * (ucolor[2] + 256u * 255u));\n}\n";
   const paste_panel = "\n// suffix for pasting one panel onto another\n\nstruct parameters {\n    in_hw: vec2u,\n    out_hw: vec2u,\n    offset: vec2i,\n}\n\n@group(0) @binding(0) var<storage, read> inputBuffer : array<u32>;\n\n@group(1) @binding(0) var<storage, read_write> outputBuffer : array<u32>;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // input expected to be smaller, so loop over input\n    let inputOffset = global_id.x;\n    let in_hw = parms.in_hw;\n    let in_location = panel_location_of(inputOffset, in_hw);\n    if (in_location.is_valid) {\n        let paste_location = vec2f(parms.offset) + vec2f(in_location.ij);\n        let out_hw = parms.out_hw;\n        let out_location = f_panel_offset_of(paste_location, out_hw);\n        if (out_location.is_valid) {\n            let value = inputBuffer[in_location.offset];\n            outputBuffer[out_location.offset] = value;\n        }\n    }\n}";
   class PasteParameters extends DataObject {
@@ -1534,6 +1626,10 @@
       return [Math.ceil(this.source.size / 256), 1, 1];
     }
   }
+  const PastePanel$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    PastePanel
+  }, Symbol.toStringTag, { value: "Module" }));
   function do_paste() {
     console.log("pasting asyncronously");
     (async () => await do_paste_async())();
@@ -1577,14 +1673,18 @@
     const resultArray = await output.pull_buffer();
     console.log("got result", resultArray);
   }
-  function do_mouse_paste(to_canvas) {
+  const paste_test = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    do_paste
+  }, Symbol.toStringTag, { value: "Module" }));
+  function do_mouse_paste(to_canvas2) {
     console.log("pasting asyncronously");
-    defer(do_mouse_paste_async(to_canvas));
+    defer(do_mouse_paste_async(to_canvas2));
   }
   function defer(future) {
     (async () => await future)();
   }
-  async function do_mouse_paste_async(to_canvas) {
+  async function do_mouse_paste_async(to_canvas2) {
     debugger;
     const context2 = new Context();
     await context2.connect();
@@ -1631,10 +1731,10 @@
     );
     paste_small.attach_to_context(context2);
     paste_small.run();
-    const painter2 = new PaintPanel(target, to_canvas);
+    const painter2 = new PaintPanel(target, to_canvas2);
     painter2.attach_to_context(context2);
     painter2.run();
-    const brec = to_canvas.getBoundingClientRect();
+    const brec = to_canvas2.getBoundingClientRect();
     const info = document.getElementById("info");
     info.textContent = "initial paste done.";
     const mousemove = function(e) {
@@ -1655,8 +1755,12 @@
       paste_small.run();
       painter2.run();
     };
-    to_canvas.addEventListener("mousemove", mousemove);
+    to_canvas2.addEventListener("mousemove", mousemove);
   }
+  const mousepaste = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    do_mouse_paste
+  }, Symbol.toStringTag, { value: "Module" }));
   function do_gray() {
     console.log("computing sample asyncronously");
     (async () => await do_gray_async())();
@@ -1686,6 +1790,10 @@
     const resultArray = await output.pull_buffer();
     console.log("got result", resultArray);
   }
+  const gray_test = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    do_gray
+  }, Symbol.toStringTag, { value: "Module" }));
   function do_max_projection() {
     console.log("computing sample asyncronously");
     (async () => await do_max_projection_async())();
@@ -1715,7 +1823,7 @@
     ];
     const shape_in2 = [2, 3, 2];
     const content_in = [30, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-    const inputVolume = new Volume(shape_in2, content_in, ijk2xyz_in, Float32Array);
+    const inputVolume = new Volume$1(shape_in2, content_in, ijk2xyz_in, Float32Array);
     inputVolume.attach_to_context(context2);
     outputDB.attach_to_context(context2);
     console.log("inputVolume", inputVolume);
@@ -1726,6 +1834,10 @@
     console.log("got result", resultArray);
     console.log("outputDB", outputDB);
   }
+  const max_projection_test = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    do_max_projection
+  }, Symbol.toStringTag, { value: "Module" }));
   class Orbiter {
     constructor(canvas, center, initial_rotation2, callback) {
       const that = this;
@@ -1832,6 +1944,10 @@
       this.callbacks.push(callback);
     }
   }
+  const canvas_orbit = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    Orbiter
+  }, Symbol.toStringTag, { value: "Module" }));
   function do_pipeline(canvas, from_fn, kSlider, kValue) {
     console.log("computing sample asyncronously");
     (async () => await do_pipeline_async(canvas, from_fn, kSlider, kValue))();
@@ -1948,6 +2064,1207 @@
     project_action.change_matrix(ijk2xyz_out);
     sequence.run();
   }
+  const pipeline_test = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    do_pipeline,
+    do_rotation
+  }, Symbol.toStringTag, { value: "Module" }));
+  class Volume {
+    constructor(shape, data) {
+      const [K, J, I] = shape;
+      this.shape = shape;
+      this.size = I * J * K;
+      const ln = data.length;
+      if (this.size != ln) {
+        throw new Error(
+          `data length ${ln} doesn't match shape ${shape}`
+        );
+      }
+      this.data = new Float32Array(data);
+    }
+    gpu_volume(context2, dK, dJ, dI) {
+      dK = dK || 1;
+      dJ = dJ || 1;
+      dI = dI || 1;
+      const [K, J, I] = this.shape;
+      const scaling = [
+        [dK, 0, 0, 0],
+        [0, dJ, 0, 0],
+        [0, 0, dI, 0],
+        [0, 0, 0, 1]
+      ];
+      const swap = [
+        [0, -1, 0, 0],
+        [0, 0, 1, 0],
+        [1, 0, 0, 0],
+        [0, 0, 0, 1]
+      ];
+      const distortion = MM_product(swap, scaling);
+      const translation = affine3d(null, [-K / 2, -J / 2, -I / 2]);
+      const ijk2xyz = MM_product(distortion, translation);
+      const volume2 = context2.volume(
+        this.shape,
+        this.data,
+        ijk2xyz,
+        Float32Array
+      );
+      return volume2;
+    }
+  }
+  function volume_from_prefixed_data(data) {
+    const shape = data.slice(0, 3);
+    const suffix_data = data.slice(3);
+    return new Volume(shape, suffix_data);
+  }
+  async function fetch_volume_prefixed(url, kind) {
+    kind = kind || Float32Array;
+    const buffer = await fetch_buffer(url);
+    const prefixed_data = new kind(buffer);
+    return volume_from_prefixed_data(prefixed_data);
+  }
+  async function fetch_buffer(url) {
+    const response = await fetch(url);
+    const content = await response.blob();
+    const buffer = await content.arrayBuffer();
+    return buffer;
+  }
+  const CPUVolume = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    Volume,
+    fetch_volume_prefixed
+  }, Symbol.toStringTag, { value: "Module" }));
+  const depth_buffer_range = '\n// Select a range in depths or values from a depth buffer \n// copied to output depth buffer at same ij locations where valid.\n\n// Requires "depth_buffer.wgsl".\n\nstruct parameters {\n    lower_bound: f32,\n    upper_bound: f32,\n    do_values: u32, // flag.  Do values if >0 else do depths.\n}\n\n@group(0) @binding(0) var<storage, read> inputDB : DepthBufferF32;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    if (outputLocation.valid) {\n        var current_value = outputShape.default_value;\n        var current_depth = outputShape.default_depth;\n        let inputIndices = outputLocation.ij;\n        let inputShape = inputDB.shape;\n        let inputLocation = depth_buffer_location_of(inputIndices, inputShape);\n        if (inputLocation.valid) {\n            let inputDepth = inputDB.data_and_depth[inputLocation.depth_offset];\n            let inputValue = inputDB.data_and_depth[inputLocation.data_offset];\n            var testValue = inputDepth;\n            if (parms.do_values > 0) {\n                testValue = inputValue;\n            }\n            if (parms.lower_bound <= testValue) && (testValue <= parms.upper_bound) {\n                current_depth = inputDepth;\n                current_value = inputValue;\n            }\n        }\n        outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;\n        outputDB.data_and_depth[outputLocation.data_offset] = current_value;\n    }\n}';
+  class RangeParameters extends DataObject {
+    constructor(lower_bound, upper_bound, do_values) {
+      super();
+      this.lower_bound = lower_bound;
+      this.upper_bound = upper_bound;
+      this.do_values = do_values;
+      this.buffer_size = 4 * Int32Array.BYTES_PER_ELEMENT;
+    }
+    load_buffer(buffer) {
+      buffer = buffer || this.gpu_buffer;
+      const arrayBuffer = buffer.getMappedRange();
+      const mappedUInts = new Uint32Array(arrayBuffer);
+      const mappedFloats = new Float32Array(arrayBuffer);
+      mappedFloats[0] = this.lower_bound;
+      mappedFloats[1] = this.upper_bound;
+      mappedUInts[2] = this.do_values;
+    }
+  }
+  class DepthRange extends UpdateAction {
+    constructor(fromDepthBuffer, toDepthBuffer, lower_bound, upper_bound, do_values) {
+      super();
+      this.source = fromDepthBuffer;
+      this.target = toDepthBuffer;
+      this.parameters = new RangeParameters(lower_bound, upper_bound, do_values);
+    }
+    change_bounds(lower_bound, upper_bound) {
+      this.parameters.lower_bound = lower_bound;
+      this.parameters.upper_bound = upper_bound;
+      this.parameters.push_buffer();
+    }
+    change_lower_bound(lower_bound) {
+      this.change_bounds(lower_bound, this.parameters.upper_bound);
+    }
+    change_upper_bound(upper_bound) {
+      this.change_bounds(this.parameters.lower_bound, upper_bound);
+    }
+    get_shader_module(context2) {
+      const gpu_shader = depth_buffer$1 + depth_buffer_range;
+      return context2.device.createShaderModule({ code: gpu_shader });
+    }
+    getWorkgroupCounts() {
+      return [Math.ceil(this.source.size / 256), 1, 1];
+    }
+  }
+  const DepthBufferRange = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    DepthRange
+  }, Symbol.toStringTag, { value: "Module" }));
+  const index_colorize = "\n// suffix for pasting one panel onto another\n\nstruct parameters {\n    in_hw: vec2u,\n    out_hw: vec2u,\n    default_color: u32,\n}\n\n@group(0) @binding(0) var<storage, read> inputBuffer : array<u32>;\n\n@group(1) @binding(0) var<storage, read_write> outputBuffer : array<u32>;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // loop over output\n    let outputOffset = global_id.x;\n    let out_hw = parms.out_hw;\n    let out_location = panel_location_of(outputOffset, out_hw);\n    if (out_location.is_valid) {\n        // initial values arrive as f32\n        let color_index_f = bitcast<f32>(outputBuffer[out_location.offset]);\n        let color_index = u32(color_index_f);\n        let color_ij = vec2u(color_index, 0);\n        //let color_ij = vec2u(0, color_index);\n        let in_hw = parms.in_hw;\n        let color_location = panel_offset_of(color_ij, in_hw);\n        var value = parms.default_color;\n        value = 4294967295u - 256u * 255; // magenta\n        //value = 0;\n        if (color_location.is_valid) {\n            value = inputBuffer[color_location.offset];\n        }\n        // debug\n        //if (color_index < 1000) {\n        //    value = inputBuffer[color_index];\n        //    if (color_index > 5) {\n        //        value = 4294967295u - 256u * 255; // magenta\n        //    }\n        //    //value = 4294967295u - 256 * 256u * 255; // yellow\n        //    //value = 0;\n        //}\n        outputBuffer[out_location.offset] = value;\n    }\n}";
+  class IndexColorParameters extends DataObject {
+    constructor(in_hw, out_hw, default_color) {
+      super();
+      this.in_hw = in_hw;
+      this.out_hw = out_hw;
+      this.default_color = default_color;
+      this.buffer_size = 6 * Int32Array.BYTES_PER_ELEMENT;
+    }
+    load_buffer(buffer) {
+      buffer = buffer || this.gpu_buffer;
+      const arrayBuffer = buffer.getMappedRange();
+      const mappedUInts = new Uint32Array(arrayBuffer);
+      mappedUInts.set(this.in_hw);
+      mappedUInts.set(this.out_hw, 2);
+      mappedUInts[4] = this.default_color;
+    }
+  }
+  class IndexColorizePanel extends UpdateAction {
+    // all color values are Uint32 encoded RGBA
+    constructor(fromIndexedColors, toPanel, default_color) {
+      super();
+      const ncolors = fromIndexedColors.width;
+      if (ncolors != 1) {
+        throw new Error("indexed colors should have width 1: " + ncolors);
+      }
+      const from_hw = [fromIndexedColors.height, ncolors];
+      const to_hw = [toPanel.height, toPanel.width];
+      this.parameters = new IndexColorParameters(from_hw, to_hw, default_color);
+      this.from_hw = from_hw;
+      this.to_hw = to_hw;
+      this.default_color = default_color;
+      this.source = fromIndexedColors;
+      this.target = toPanel;
+    }
+    get_shader_module(context2) {
+      const gpu_shader = panel_buffer + index_colorize;
+      return context2.device.createShaderModule({ code: gpu_shader });
+    }
+    getWorkgroupCounts() {
+      return [Math.ceil(this.target.size / 256), 1, 1];
+    }
+  }
+  const IndexColorizePanel$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    IndexColorizePanel
+  }, Symbol.toStringTag, { value: "Module" }));
+  class View extends Action {
+    constructor(ofVolume) {
+      super();
+      this.ofVolume = ofVolume;
+      this.set_geometry();
+    }
+    async paint_on(canvas, orbiting) {
+      const context2 = this.ofVolume.context;
+      if (!context2) {
+        throw new Error("Volume is not attached to GPU context.");
+      }
+      const sequence2 = this.canvas_paint_sequence(context2, canvas);
+      if (orbiting) {
+        const orbiter_callback2 = this.get_orbiter_callback();
+        const rotation = eye(3);
+        this.orbiter = new Orbiter(
+          canvas,
+          null,
+          // center,
+          rotation,
+          orbiter_callback2
+          // callback,
+        );
+      }
+      sequence2.run();
+    }
+    set_geometry() {
+      this.MaxS = this.ofVolume.max_extent() * Math.sqrt(2) / Math.sqrt(3);
+      const side = Math.ceil(this.MaxS);
+      this.output_shape = [side, side];
+      this.initial_rotation = eye(3);
+      this.affine_translation = affine3d(null, [-side / 2, -side / 2, -side / 2]);
+      this.projection_matrix = MM_product(
+        affine3d(this.initial_rotation),
+        this.affine_translation
+      );
+    }
+    canvas_paint_sequence(context2, canvas) {
+      this.attach_to_context(context2);
+      const projection = this.panel_sequence(context2);
+      const painter2 = context2.paint(projection.output_panel, canvas);
+      this.paint_sequence = context2.sequence([
+        projection.sequence,
+        painter2
+      ]);
+      return this.paint_sequence;
+    }
+    async run() {
+      const sequence2 = this.paint_sequence || this.project_to_panel;
+      sequence2.run();
+    }
+    panel_sequence(context2) {
+      throw new Error("panel_sequence must be defined in subclass.");
+    }
+    _orbiter_callback(affine_transform) {
+      const matrix = MM_product(affine_transform, this.projection_matrix);
+      this.change_matrix(matrix);
+      this.run();
+    }
+    change_matrix(matrix) {
+    }
+    get_orbiter_callback() {
+      const that = this;
+      return function(affine_transform) {
+        return that._orbiter_callback(affine_transform);
+      };
+    }
+    get_output_depth_buffer(context2, default_depth, default_value, kind) {
+      default_depth = default_depth || -1e10;
+      default_value = default_value || -1e10;
+      kind = kind || Float32Array;
+      context2 = context2 || this.context;
+      return context2.depth_buffer(
+        this.output_shape,
+        default_depth,
+        default_value,
+        null,
+        // no input data
+        null,
+        // no input depth
+        kind
+      );
+    }
+    get_output_panel(context2) {
+      context2 = context2 || this.context;
+      const [height, width] = this.output_shape;
+      return context2.panel(width, height);
+    }
+    get_gray_panel_sequence(for_depth_buffer, min_value, max_value) {
+      const context2 = this.context;
+      const flat_panel = this.get_output_panel(context2);
+      const flatten_action = for_depth_buffer.flatten_action(flat_panel);
+      const gray_panel = this.get_output_panel(context2);
+      const gray_action = context2.to_gray_panel(
+        flat_panel,
+        gray_panel,
+        min_value,
+        max_value
+      );
+      const gray_panel_sequence = context2.sequence([
+        flatten_action,
+        gray_action
+      ]);
+      return {
+        sequence: gray_panel_sequence,
+        output_panel: gray_panel
+      };
+    }
+  }
+  const ViewVolume = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    View
+  }, Symbol.toStringTag, { value: "Module" }));
+  class Max extends View {
+    panel_sequence(context2) {
+      context2 = context2 || this.context;
+      const inputVolume = this.ofVolume;
+      this.min_value = inputVolume.min_value;
+      this.max_value = inputVolume.max_value;
+      this.max_depth_buffer = this.get_output_depth_buffer(context2);
+      this.max_panel = this.get_output_panel(context2);
+      this.grey_panel = this.get_output_panel(context2);
+      this.project_action = context2.max_projection(
+        inputVolume,
+        this.max_depth_buffer,
+        this.projection_matrix
+      );
+      this.flatten_action = this.flatten_action = this.max_depth_buffer.flatten_action(
+        this.max_panel
+      );
+      this.gray_action = context2.to_gray_panel(
+        this.max_panel,
+        this.grey_panel,
+        this.min_value,
+        this.max_value
+      );
+      this.project_to_panel = context2.sequence([
+        this.project_action,
+        this.flatten_action,
+        this.gray_action
+      ]);
+      return {
+        sequence: this.project_to_panel,
+        output_panel: this.grey_panel
+      };
+    }
+    //_orbiter_callback(affine_transform) {
+    //    const matrix = qdVector.MM_product(affine_transform, this.projection_matrix);
+    //    this.project_action.change_matrix(matrix);
+    //    const sequence = this.paint_sequence || this.project_to_panel;
+    //    sequence.run();
+    //};
+    change_matrix(matrix) {
+      this.project_action.change_matrix(matrix);
+    }
+  }
+  const MaxView = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    Max
+  }, Symbol.toStringTag, { value: "Module" }));
+  const mix_color_panels = "\n// suffix for pasting one panel onto another\n\nstruct parameters {\n    ratios: vec4f,\n    in_hw: vec2u,\n    out_hw: vec2u,\n}\n\n// Input and output panels interpreted as u32 rgba\n@group(0) @binding(0) var<storage, read> inputBuffer : array<u32>;\n\n@group(1) @binding(0) var<storage, read_write> outputBuffer : array<u32>;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // loop over input\n    let inputOffset = global_id.x;\n    let in_hw = parms.in_hw;\n    let in_location = panel_location_of(inputOffset, in_hw);\n    let out_hw = parms.out_hw;\n    let out_location = panel_location_of(inputOffset, out_hw);\n    if ((in_location.is_valid) && (out_location.is_valid)) {\n        let in_u32 = inputBuffer[in_location.offset];\n        let out_u32 = outputBuffer[out_location.offset];\n        let in_color = unpack4x8unorm(in_u32);\n        let out_color = unpack4x8unorm(out_u32);\n        let ratios = parms.ratios;\n        const ones = vec4f(1.0, 1.0, 1.0, 1.0);\n        let mix_color = ((ones - ratios) * out_color) + (ratios * in_color);\n        let mix_value = f_pack_color(mix_color.xyz);\n        outputBuffer[out_location.offset] = mix_value;\n    }\n}";
+  class MixParameters extends DataObject {
+    constructor(in_hw, out_hw, ratios) {
+      super();
+      this.in_hw = in_hw;
+      this.out_hw = out_hw;
+      this.ratios = ratios;
+      this.buffer_size = 8 * Int32Array.BYTES_PER_ELEMENT;
+    }
+    load_buffer(buffer) {
+      buffer = buffer || this.gpu_buffer;
+      const arrayBuffer = buffer.getMappedRange();
+      const mappedUInts = new Uint32Array(arrayBuffer);
+      const mappedFloats = new Float32Array(arrayBuffer);
+      mappedFloats.set(this.ratios, 0);
+      mappedUInts.set(this.in_hw, 4);
+      mappedUInts.set(this.out_hw, 6);
+    }
+  }
+  class MixPanelsRatios extends UpdateAction {
+    constructor(fromPanel, toPanel, ratios) {
+      super();
+      const from_hw = [fromPanel.height, fromPanel.width];
+      const to_hw = [toPanel.height, toPanel.width];
+      if (from_hw[0] != to_hw[0] || from_hw[0] != to_hw[0]) {
+        throw new Error("Mixed panels to have same shape: " + from_hw + " :: " + to_hw);
+      }
+      for (var ratio of ratios) {
+        if (ratio > 1 || ratio < 0) {
+          throw new Error("Invalid ratio: " + ratio);
+        }
+      }
+      this.parameters = new MixParameters(from_hw, to_hw, ratios);
+      this.from_hw = from_hw;
+      this.to_hw = to_hw;
+      this.ratios = ratios;
+      this.source = fromPanel;
+      this.target = toPanel;
+    }
+    change_ratio(new_ratio) {
+      this.ratios = [new_ratio, new_ratio, new_ratio, new_ratio];
+      this.parameters.ratios = this.ratios;
+      this.parameters.push_buffer();
+    }
+    get_shader_module(context2) {
+      const gpu_shader = panel_buffer + mix_color_panels;
+      return context2.device.createShaderModule({ code: gpu_shader });
+    }
+    getWorkgroupCounts() {
+      return [Math.ceil(this.source.size / 256), 1, 1];
+    }
+  }
+  class MixPanels extends MixPanelsRatios {
+    constructor(fromPanel, toPanel, ratio) {
+      const ratios = [ratio, ratio, ratio, ratio];
+      super(fromPanel, toPanel, ratios);
+    }
+  }
+  const MixColorPanels = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    MixPanels,
+    MixPanelsRatios
+  }, Symbol.toStringTag, { value: "Module" }));
+  const threshold = "\n// Project a volume where the values cross a threshold\n// Assumes prefixes: \n//  panel_buffer.wgsl\n//  volume_frame.wgsl\n//  volume_intercept.wgsl\n\nstruct parameters {\n    ijk2xyz : mat4x4f,\n    int3: Intersections3,\n    dk: f32,\n    threshold_value: f32,\n    // 2 float padding at end...???\n}\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    //let local_parms = parms;\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    // k increment length in xyz space\n    //let dk = 1.0f;  // fix this! -- k increment length in xyz space\n    let dk = parms.dk;\n    var initial_value_found = false;\n    var compare_diff: f32;\n    var threshold_crossed = false;\n    if (outputLocation.valid) {\n        var inputGeometry = inputVolume.geometry;\n        var current_value = outputShape.default_value;\n        var current_depth = outputShape.default_depth;\n        let offsetij = vec2i(outputLocation.ij);\n        let ijk2xyz = parms.ijk2xyz;\n        var threshold_value = parms.threshold_value;\n        var end_points = scan_endpoints(\n            offsetij,\n            parms.int3,\n            &inputGeometry,\n            ijk2xyz,\n        );\n        if (end_points.is_valid) {\n            let offsetij_f = vec2f(offsetij);\n            for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += dk) {\n                //let ijkw = vec4u(vec2u(outputLocation.ij), depth, 1u);\n                //let f_ijk = vec4f(ijkw);\n                //let xyz_probe = parms.ijk2xyz * f_ijk;\n                let xyz_probe = probe_point(offsetij_f, depth, ijk2xyz);\n                let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);\n                if ((input_offset.is_valid) && (!threshold_crossed)) {\n                    let valueu32 = inputVolume.content[input_offset.offset];\n                    let value = bitcast<f32>(valueu32);\n                    let diff = value - threshold_value;\n                    if ((initial_value_found) && (!threshold_crossed)) {\n                        if (compare_diff * diff <= 0.0f) {\n                            threshold_crossed = true;\n                            current_depth = f32(depth);\n                            current_value = value;\n                            break;\n                        }\n                    }\n                    initial_value_found = true;\n                    compare_diff = diff;\n                }\n            }\n        }\n        outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;\n        outputDB.data_and_depth[outputLocation.data_offset] = current_value;\n    }\n}\n";
+  class ThresholdParameters extends DataObject {
+    constructor(ijk2xyz, volume2, threshold_value) {
+      super();
+      this.volume = volume2;
+      this.threshold_value = threshold_value;
+      this.buffer_size = (4 * 4 + 4 * 3 + 4) * Int32Array.BYTES_PER_ELEMENT;
+      this.set_matrix(ijk2xyz);
+    }
+    set_matrix(ijk2xyz) {
+      this.ijk2xyz = M_column_major_order(ijk2xyz);
+      this.intersections = intersection_buffer(ijk2xyz, this.volume);
+    }
+    load_buffer(buffer) {
+      buffer = buffer || this.gpu_buffer;
+      const arrayBuffer = buffer.getMappedRange();
+      const mappedFloats = new Float32Array(arrayBuffer);
+      mappedFloats.set(this.ijk2xyz, 0);
+      mappedFloats.set(this.intersections, 4 * 4);
+      mappedFloats[4 * 4 + 3 * 4 + 1] = this.threshold_value;
+    }
+  }
+  class ThresholdProject extends Project {
+    constructor(fromVolume, toDepthBuffer, ijk2xyz, threshold_value) {
+      super(fromVolume, toDepthBuffer);
+      this.threshold_value = threshold_value;
+      this.parameters = new ThresholdParameters(ijk2xyz, fromVolume, threshold_value);
+    }
+    //change_matrix(ijk2xyz) {
+    //    this.parameters.set_matrix(ijk2xyz);
+    //    this.parameters.push_buffer();
+    //};
+    change_threshold(value) {
+      this.threshold_value = value;
+      this.parameters.threshold_value = value;
+      this.parameters.push_buffer();
+    }
+    get_shader_module(context2) {
+      const gpu_shader = volume_frame + depth_buffer$1 + volume_intercepts + threshold;
+      return context2.device.createShaderModule({ code: gpu_shader });
+    }
+    //getWorkgroupCounts() {
+    //    return [Math.ceil(this.target.size / 256), 1, 1];
+    //};
+  }
+  const ThresholdAction = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    ThresholdProject
+  }, Symbol.toStringTag, { value: "Module" }));
+  const normal_colors = "\n// for non-default entries of outputDB\n// put RGBA entries where RGB are scaled 255 representations of\n// approximate normals (direction of greatest increase) at the\n// corresponding location in the inputVolume\n\n// Assumes prefixes: \n//  panel_buffer.wgsl\n//  volume_frame.wgsl\n\nstruct parameters {\n    ijk2xyz : mat4x4f,\n    default_value: u32,\n}\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    if (outputLocation.valid) {\n        var inputGeometry = inputVolume.geometry;\n        var output_value = parms.default_value;\n        var offset_sum = vec3f(0.0f, 0.0f, 0.0f);\n        let depth = outputDB.data_and_depth[outputLocation.depth_offset];\n        let ij = outputLocation.ij;\n        let f_ijk = vec4f(f32(ij[0]), f32(ij[1]), depth, 1.0f);\n        let xyz_probe = parms.ijk2xyz * f_ijk;\n        let xyz = xyz_probe.xyz;\n        let input_offset = offset_of_xyz(xyz, &inputGeometry);\n        var offsets_are_valid = input_offset.is_valid;\n        const combinations = array(\n            vec3u(0,1,2),\n            vec3u(1,2,0),\n            vec3u(2,0,1),\n        );\n        if (offsets_are_valid) {\n            for (var q=0; q<3; q++) {\n                let combo = combinations[q];\n                let M = combo[0];\n                let N = combo[1];\n                let P = combo[2];\n                for (var m_shift=-1; m_shift<=1; m_shift++) {\n                    for (var n_shift=-1; n_shift<=1; n_shift++) {\n                        let vector_center_offset = input_offset.offset;\n                        let vector_center_indices = index_of(vector_center_offset, &inputGeometry);\n                        var left_indices = vector_center_indices.ijk;\n                        var right_indices = vector_center_indices.ijk;\n                        left_indices[P] += 1u;\n                        if (right_indices[P] == 0) {\n                            offsets_are_valid = false;\n                        } else {\n                            right_indices[P] = u32(i32(right_indices[P]) - 1);\n                            let left_offset = offset_of(left_indices, &inputGeometry);\n                            let right_offset = offset_of(right_indices, &inputGeometry);\n                            offsets_are_valid = offsets_are_valid && left_offset.is_valid && right_offset.is_valid;\n                            if (offsets_are_valid) {\n                                let left_point = to_model(left_indices, &inputGeometry);\n                                let right_point = to_model(right_indices, &inputGeometry);\n                                let left_value_u32 = inputVolume.content[left_offset.offset];\n                                let right_value_u32 = inputVolume.content[right_offset.offset];\n                                let weight = bitcast<f32>(left_value_u32) - bitcast<f32>(right_value_u32);\n                                let vector = (left_point - right_point);\n                                offset_sum += weight * vector;\n                            }\n                        } // don't break: set of measure 0\n                    }\n                }\n            }\n        }\n        if (offsets_are_valid) {\n            let L = length(offset_sum);\n            // default to white for 0 normal\n            output_value = 4294967295u;\n            if (L > 1e-10) {\n                let N = normalize(offset_sum);\n                // xxx should clamp?\n                let colors = vec3u((N + 1.0) * 127.5);\n                //let colors = vec3u(255, 0, 0);  // debug\n                //let result = pack4xU8(color); ???error: unresolved call target 'pack4xU8'\n                output_value = \n                    colors[0] + \n                    256 * (colors[1] + 256 * (colors[2] + 256 * 255));\n            }\n        } else {\n            //output_value = 255 * 256; // debug\n        }\n        //...\n        outputDB.data_and_depth[outputLocation.data_offset] = bitcast<f32>(output_value);\n    }\n}";
+  class NormalParameters extends DataObject {
+    constructor(ijk2xyz, default_value) {
+      super();
+      this.set_matrix(ijk2xyz);
+      this.default_value = default_value;
+      this.buffer_size = (4 * 4 + 4) * Int32Array.BYTES_PER_ELEMENT;
+    }
+    set_matrix(ijk2xyz) {
+      this.ijk2xyz = M_column_major_order(ijk2xyz);
+    }
+    load_buffer(buffer) {
+      buffer = buffer || this.gpu_buffer;
+      const arrayBuffer = buffer.getMappedRange();
+      const mappedFloats = new Float32Array(arrayBuffer);
+      mappedFloats.set(this.ijk2xyz, 0);
+      mappedFloats[4 * 4] = this.default_value;
+    }
+  }
+  class NormalColorize extends Project {
+    constructor(fromVolume, toDepthBuffer, ijk2xyz, default_value) {
+      super(fromVolume, toDepthBuffer);
+      this.default_value = default_value;
+      this.parameters = new NormalParameters(ijk2xyz, default_value);
+    }
+    //change_matrix(ijk2xyz) {
+    //    this.parameters.set_matrix(ijk2xyz);
+    //    this.parameters.push_buffer();
+    //};
+    get_shader_module(context2) {
+      const gpu_shader = volume_frame + depth_buffer$1 + normal_colors;
+      return context2.device.createShaderModule({ code: gpu_shader });
+    }
+    //getWorkgroupCounts() {
+    //    return [Math.ceil(this.target.size / 256), 1, 1];
+    //};
+  }
+  const NormalAction = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    NormalColorize
+  }, Symbol.toStringTag, { value: "Module" }));
+  const soften_volume = "\n// quick and dirty volume low pass filter\n\n// Assumes prefixes: \n//  panel_buffer.wgsl\n//  volume_frame.wgsl\n\n// weights per offset rectangular distance from voxel\nstruct parameters {\n    offset_weights: vec4f,\n}\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputVolume : Volume;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    let outputOffset = global_id.x;\n    var inputGeometry = inputVolume.geometry;\n    var outputGeometry = outputVolume.geometry;\n    let output_index = index_of(outputOffset, &outputGeometry);\n    if (output_index.is_valid) {\n        let input_index = index_of(outputOffset, &inputGeometry);\n        if (input_index.is_valid) {\n            // by default just copy along borders\n            let center = vec3i(output_index.ijk);\n            let offset_weights = parms.offset_weights;\n            var result_value = inputVolume.content[outputOffset];\n            var offsets_valid = all(input_index.ijk > vec3u(0u,0u,0u));\n            var accumulator = 0.0f;\n            for (var di=-1; di<=1; di++) {\n                for (var dj=-1; dj<=1; dj++) {\n                    for (var dk=-1; dk<=1; dk++) {\n                        let shift = vec3i(di, dj, dk);\n                        let probe = vec3u(shift + center);\n                        let probe_offset = offset_of(probe, &inputGeometry);\n                        offsets_valid = offsets_valid && probe_offset.is_valid;\n                        if (offsets_valid) {\n                            let abs_offset = u32(abs(di) + abs(dj) + abs(dk));\n                            let weight = offset_weights[abs_offset];\n                            let probe_value = bitcast<f32>(inputVolume.content[probe_offset.offset]);\n                            accumulator += (weight * probe_value);\n                        }\n                    }\n                }\n            }\n            if (offsets_valid) {\n                result_value = bitcast<u32>(accumulator);\n            }\n            outputVolume.content[outputOffset] = result_value;\n        }\n    }\n}";
+  const default_weights = new Float32Array([0.43855053, 0.03654588, 0.0151378, 0.02006508]);
+  class SoftenParameters extends DataObject {
+    constructor(offset_weights) {
+      super();
+      offset_weights = offset_weights || default_weights;
+      this.offset_weights = offset_weights;
+      this.buffer_size = 4 * Int32Array.BYTES_PER_ELEMENT;
+    }
+    load_buffer(buffer) {
+      buffer = buffer || this.gpu_buffer;
+      const arrayBuffer = buffer.getMappedRange();
+      const mappedFloats = new Float32Array(arrayBuffer);
+      mappedFloats.set(this.offset_weights, 0);
+    }
+  }
+  class SoftenVolume extends UpdateAction {
+    constructor(fromVolume, toVolume, offset_weights) {
+      super();
+      this.source = fromVolume;
+      this.target = toVolume;
+      this.offset_weights = offset_weights;
+      this.parameters = new SoftenParameters(this.offset_weights);
+    }
+    get_shader_module(context2) {
+      const gpu_shader = volume_frame + soften_volume;
+      return context2.device.createShaderModule({ code: gpu_shader });
+    }
+    getWorkgroupCounts() {
+      return [Math.ceil(this.target.size / 256), 1, 1];
+    }
+  }
+  const Soften = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    SoftenVolume
+  }, Symbol.toStringTag, { value: "Module" }));
+  class Mix extends View {
+    constructor(ofVolume, indexed_colors, ratio) {
+      super(ofVolume);
+      this.indexed_colors = indexed_colors;
+      this.ratio = ratio;
+    }
+    async run() {
+      await this.colors_promise;
+      await this.soften_promise;
+      super.run();
+    }
+    panel_sequence(context2) {
+      context2 = context2 || this.context;
+      const inputVolume = this.ofVolume;
+      this.soft_volume = inputVolume.same_geometry(context2);
+      this.depth_buffer = this.get_output_depth_buffer(context2);
+      this.index_panel = this.get_output_panel(context2);
+      this.output_panel = this.get_output_panel(context2);
+      this.threshold_value = 0.5;
+      const ncolors = this.indexed_colors.length;
+      this.color_panel = context2.panel(1, ncolors);
+      this.colors_promise = this.color_panel.push_buffer(this.indexed_colors);
+      this.project_action = new ThresholdProject(
+        inputVolume,
+        this.depth_buffer,
+        this.projection_matrix,
+        this.threshold_value
+      );
+      this.project_action.attach_to_context(context2);
+      this.index_flatten = this.depth_buffer.flatten_action(this.index_panel);
+      this.soften_action = new SoftenVolume(inputVolume, this.soft_volume, null);
+      this.soften_action.attach_to_context(context2);
+      this.soften_action.run();
+      this.soften_promise = context2.onSubmittedWorkDone();
+      const default_color = 0;
+      this.normal_colorize_action = new NormalColorize(
+        this.soft_volume,
+        this.depth_buffer,
+        this.projection_matrix,
+        default_color
+      );
+      this.normal_colorize_action.attach_to_context(context2);
+      this.flatten_normals = this.depth_buffer.flatten_action(this.output_panel);
+      this.index_colorize = new IndexColorizePanel(
+        this.color_panel,
+        this.index_panel,
+        default_color
+      );
+      this.index_colorize.attach_to_context(context2);
+      this.mix_action = new MixPanels(
+        this.index_panel,
+        this.output_panel,
+        this.ratio
+      );
+      this.mix_action.attach_to_context(context2);
+      this.project_to_panel = context2.sequence([
+        this.project_action,
+        this.index_flatten,
+        //this.soften_action, // should execute only once (unless volume changes)
+        this.normal_colorize_action,
+        this.index_colorize,
+        this.flatten_normals,
+        this.mix_action
+      ]);
+      return {
+        sequence: this.project_to_panel,
+        output_panel: this.output_panel
+      };
+    }
+    change_matrix(matrix) {
+      this.project_action.change_matrix(matrix);
+      this.normal_colorize_action.change_matrix(matrix);
+    }
+    change_ratio(ratio) {
+      this.mix_action.change_ratio(ratio);
+      this.run();
+    }
+  }
+  const MixView = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    Mix
+  }, Symbol.toStringTag, { value: "Module" }));
+  class Threshold extends View {
+    panel_sequence(context2) {
+      context2 = context2 || this.context;
+      const inputVolume = this.ofVolume;
+      this.depth_buffer = this.get_output_depth_buffer(context2);
+      this.panel = this.get_output_panel(context2);
+      this.min_value = inputVolume.min_value;
+      this.max_value = inputVolume.max_value;
+      this.threshold_value = (inputVolume.min_value + inputVolume.max_value) / 2;
+      this.project_action = new ThresholdProject(
+        inputVolume,
+        this.depth_buffer,
+        this.projection_matrix,
+        this.threshold_value
+      );
+      this.project_action.attach_to_context(context2);
+      const default_color = 0;
+      this.colorize_action = new NormalColorize(
+        inputVolume,
+        this.depth_buffer,
+        this.projection_matrix,
+        default_color
+      );
+      this.colorize_action.attach_to_context(context2);
+      this.flatten_action = this.depth_buffer.flatten_action(this.panel);
+      this.project_to_panel = context2.sequence([
+        this.project_action,
+        this.colorize_action,
+        this.flatten_action
+      ]);
+      return {
+        sequence: this.project_to_panel,
+        output_panel: this.panel
+      };
+    }
+    //run() { // xxx move to viewVolume.View
+    //    const sequence = this.paint_sequence || this.project_to_panel;
+    //    sequence.run();
+    //};
+    /*
+    _orbiter_callback(affine_transform) {
+        // xxxx move to viewVolume.View ???
+        const matrix = qdVector.MM_product(affine_transform, this.projection_matrix);
+        this.project_action.change_matrix(matrix);
+        this.colorize_action.change_matrix(matrix);
+        this.run();
+        //const sequence = this.paint_sequence || this.project_to_panel;
+        //sequence.run();
+    };
+    */
+    change_matrix(matrix) {
+      this.project_action.change_matrix(matrix);
+      this.colorize_action.change_matrix(matrix);
+    }
+    change_threshold(value) {
+      this.project_action.change_threshold(value);
+      this.run();
+    }
+  }
+  const ThresholdView = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    Threshold
+  }, Symbol.toStringTag, { value: "Module" }));
+  const volume_at_depth = "\n\n// Generate values for volume in projection at a given depth as a depth buffer.\n// Assumes prefixes: \n//  depth_buffer.wgsl\n//  volume_frame.wgsl\n//  volume_intercept.wgsl\n\nstruct parameters {\n    ijk2xyz : mat4x4f, // depth buffer to xyz affine transform matrix.\n    depth: f32,  // depth to probe\n    // 3 floats padding at end...???\n}\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    if (outputLocation.valid) {\n        // xxx refactor with max_value_project somehow?\n        var inputGeometry = inputVolume.geometry;\n        var current_value = outputShape.default_value;\n        var current_depth = outputShape.default_depth;\n        let offsetij_f = vec2f(outputLocation.ij);\n        let ijk2xyz = parms.ijk2xyz;\n        let depth = parms.depth;\n        let xyz_probe = probe_point(offsetij_f, depth, ijk2xyz);\n        let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);\n        if (input_offset.is_valid) {\n            let valueu32 = inputVolume.content[input_offset.offset];\n            let value = bitcast<f32>(valueu32);\n            current_depth = f32(depth);\n            current_value = value;\n        }\n        outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;\n        outputDB.data_and_depth[outputLocation.data_offset] = current_value;\n    }\n}\n";
+  class DepthParameters extends DataObject {
+    constructor(ijk2xyz, depth) {
+      super();
+      this.depth = depth;
+      this.buffer_size = (4 * 4 + 4) * Int32Array.BYTES_PER_ELEMENT;
+      this.set_matrix(ijk2xyz);
+    }
+    set_matrix(ijk2xyz) {
+      this.ijk2xyz = M_column_major_order(ijk2xyz);
+    }
+    load_buffer(buffer) {
+      buffer = buffer || this.gpu_buffer;
+      const arrayBuffer = buffer.getMappedRange();
+      const mappedFloats = new Float32Array(arrayBuffer);
+      mappedFloats.set(this.ijk2xyz, 0);
+      mappedFloats.set([this.depth], 4 * 4);
+    }
+    change_depth(depth) {
+      this.depth = depth;
+      this.push_buffer();
+    }
+  }
+  class VolumeAtDepth extends Project {
+    constructor(fromVolume, toDepthBuffer, ijk2xyz, depth) {
+      super(fromVolume, toDepthBuffer);
+      this.parameters = new DepthParameters(ijk2xyz, depth);
+    }
+    get_shader_module(context2) {
+      const gpu_shader = volume_frame + depth_buffer$1 + volume_intercepts + volume_at_depth;
+      return context2.device.createShaderModule({ code: gpu_shader });
+    }
+    change_depth(depth) {
+      this.parameters.change_depth(depth);
+    }
+  }
+  const VolumeAtDepth$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    VolumeAtDepth
+  }, Symbol.toStringTag, { value: "Module" }));
+  class TestRangeView extends View {
+    panel_sequence(context2) {
+      context2 = context2 || this.context;
+      const inputVolume = this.ofVolume;
+      this.min_value = inputVolume.min_value;
+      this.max_value = inputVolume.max_value;
+      const origin = [0, 0, 0, 1];
+      const projection = M_inverse(this.projection_matrix);
+      const porigin = Mv_product(projection, origin);
+      this.current_depth = porigin[2];
+      this.max_depth_buffer = this.get_output_depth_buffer(context2);
+      this.max_project_action = context2.max_projection(
+        inputVolume,
+        this.max_depth_buffer,
+        this.projection_matrix
+      );
+      this.level_depth_buffer = this.get_output_depth_buffer(context2);
+      this.level_project_action = new VolumeAtDepth(
+        inputVolume,
+        this.level_depth_buffer,
+        this.projection_matrix,
+        this.current_depth
+      );
+      this.level_project_action.attach_to_context(context2);
+      this.front_depth_buffer = this.get_output_depth_buffer(context2);
+      this.slice_front_action = new DepthRange(
+        this.max_depth_buffer,
+        this.front_depth_buffer,
+        this.min_value,
+        this.current_depth,
+        0
+        // slice depths, not values
+      );
+      this.slice_front_action.attach_to_context(context2);
+      this.back_depth_buffer = this.get_output_depth_buffer(context2);
+      this.slice_back_action = new DepthRange(
+        this.max_depth_buffer,
+        this.back_depth_buffer,
+        this.current_depth,
+        this.max_value,
+        0
+        // slice depths, not values
+      );
+      this.slice_back_action.attach_to_context(context2);
+      this.front_to_gray = this.get_gray_panel_sequence(
+        this.front_depth_buffer,
+        this.min_value,
+        this.max_value
+      );
+      this.back_to_gray = this.get_gray_panel_sequence(
+        this.back_depth_buffer,
+        this.min_value,
+        this.max_value
+      );
+      this.level_to_gray = this.get_gray_panel_sequence(
+        this.level_depth_buffer,
+        this.min_value,
+        this.max_value
+      );
+      this.back_level_ratios = [0.9, 0.9, 0.5, 0];
+      this.mix_back_and_level = new MixPanelsRatios(
+        this.level_to_gray.output_panel,
+        this.back_to_gray.output_panel,
+        // to_panel
+        this.back_level_ratios
+      );
+      this.mix_back_and_level.attach_to_context(context2);
+      this.back_front_ratios = [0, 0.5, 0, 0];
+      this.back_front_ratios = [0, 0.3, 0, 0];
+      this.mix_back_and_front = new MixPanelsRatios(
+        this.front_to_gray.output_panel,
+        this.back_to_gray.output_panel,
+        // to_panel
+        this.back_front_ratios
+      );
+      this.mix_back_and_front.attach_to_context(context2);
+      this.output_panel = this.back_to_gray.output_panel;
+      this.project_to_panel = context2.sequence([
+        this.max_project_action,
+        this.level_project_action,
+        this.slice_front_action,
+        this.slice_back_action,
+        this.front_to_gray.sequence,
+        this.back_to_gray.sequence,
+        this.level_to_gray.sequence,
+        this.mix_back_and_level,
+        this.mix_back_and_front
+      ]);
+      return {
+        sequence: this.project_to_panel,
+        output_panel: this.output_panel
+      };
+    }
+    // remainder is very similar to TestDepthView
+    change_matrix(matrix) {
+      this.max_project_action.change_matrix(matrix);
+      this.level_project_action.change_matrix(matrix);
+      this.change_range(matrix);
+    }
+    change_depth(depth) {
+      this.level_project_action.change_depth(depth);
+      this.slice_front_action.change_upper_bound(depth);
+      this.slice_back_action.change_lower_bound(depth);
+      this.run();
+    }
+    on_range_change(callback) {
+      this.range_change_callback = callback;
+      this.change_range(this.projection_matrix);
+    }
+    change_range(matrix) {
+      const callback = this.range_change_callback;
+      if (callback) {
+        const invert = true;
+        const range = this.ofVolume.projected_range(matrix, invert);
+        const min_depth = range.min[2];
+        const max_depth = range.max[2];
+        console.log("new range min", min_depth, "max", max_depth);
+        this.slice_back_action.change_upper_bound(max_depth);
+        this.slice_front_action.change_lower_bound(min_depth);
+        callback(min_depth, max_depth);
+      }
+    }
+  }
+  const depth_range_view = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    TestRangeView
+  }, Symbol.toStringTag, { value: "Module" }));
+  class MixPipeline {
+    constructor(volume_url, indexed_colors, canvas, ratio) {
+      ratio = ratio || 0.7;
+      this.ratio = ratio;
+      this.indexed_colors = new Uint32Array(indexed_colors);
+      this.canvas = canvas;
+      this.volume_url = volume_url;
+      this.connect_future = this.connect();
+      this.volume_future = this.load();
+    }
+    async connect() {
+      this.context = new Context();
+      await this.context.connect();
+    }
+    async load() {
+      const context2 = this.context;
+      const response = await fetch(this.volume_url);
+      const content = await response.blob();
+      const buffer = await content.arrayBuffer();
+      console.log("buffer", buffer);
+      const input_u32 = new Uint32Array(buffer);
+      const f32 = new Float32Array(input_u32);
+      console.log("f32", f32);
+      this.volume_shape = f32.slice(0, 3);
+      this.volume_content = f32.slice(3);
+      const [K, J, I] = this.volume_shape;
+      const vol_rotation = eye(4);
+      vol_rotation[1][1] = -1;
+      const vol_translation = affine3d(null, [-K / 2, -J / 2, -I / 2]);
+      this.volume_matrix = MM_product(vol_rotation, vol_translation);
+      debugger;
+      await this.connect_future;
+      this.volume = context2.volume(
+        this.volume_shape,
+        this.volume_content,
+        this.volume_matrix,
+        Float32Array
+      );
+      this.soft_volume = context2.volume(
+        this.volume_shape,
+        null,
+        // no content
+        this.volume_matrix,
+        Float32Array
+      );
+      this.soften_action = new SoftenVolume(this.volume, this.soft_volume, null);
+      this.soften_action.attach_to_context(context2);
+      console.log("input Volume", this.volume);
+      this.volume.min_value;
+      this.volume.max_value;
+      const ncolors = this.indexed_colors.length;
+      this.color_panel = context2.panel(1, ncolors);
+      debugger;
+      await this.color_panel.push_buffer(this.indexed_colors);
+      const MaxS = Math.max(K, J, I);
+      const side = Math.ceil(Math.sqrt(2) * MaxS);
+      this.output_shape = [side, side];
+      const default_depth = 0;
+      const default_value = 0;
+      this.depth_buffer = context2.depth_buffer(
+        this.output_shape,
+        default_depth,
+        default_value,
+        null,
+        //input_data,
+        null,
+        // input_depths,
+        Float32Array
+      );
+      this.threshold_value = 0.5;
+      this.initial_rotation = [
+        [0, 0, 1],
+        [1, 0, 0],
+        [0, 1, 0]
+      ];
+      this.affine_translation = affine3d(null, [-side / 2, -side / 2, -side]);
+      this.projection_matrix = MM_product(
+        affine3d(this.initial_rotation),
+        this.affine_translation
+      );
+      this.project_action = new ThresholdProject(
+        this.volume,
+        this.depth_buffer,
+        this.projection_matrix,
+        this.threshold_value
+      );
+      this.project_action.attach_to_context(context2);
+      const [height, width] = this.output_shape;
+      this.index_panel = context2.panel(width, height);
+      this.index_flatten = this.depth_buffer.flatten_action(this.index_panel);
+      const default_color = 0;
+      this.index_colorize = new IndexColorizePanel(
+        this.color_panel,
+        this.index_panel,
+        default_color
+      );
+      this.index_colorize.attach_to_context(context2);
+      this.colorize_action = new NormalColorize(
+        this.soft_volume,
+        // do normal colorization using softened volume
+        this.depth_buffer,
+        this.projection_matrix,
+        default_color
+      );
+      this.colorize_action.attach_to_context(context2);
+      this.orbiter = new Orbiter(
+        this.canvas,
+        null,
+        // center,
+        this.initial_rotation,
+        this.get_orbiter_callback()
+        // callback,
+      );
+      this.panel = context2.panel(width, height);
+      this.flatten_action = this.depth_buffer.flatten_action(this.panel);
+      const ratio = this.ratio;
+      this.mix_action = new MixPanels(
+        this.index_panel,
+        this.panel,
+        ratio
+      );
+      this.mix_action.attach_to_context(context2);
+      this.painter = context2.paint(this.panel, this.canvas);
+      this.sequence = context2.sequence([
+        this.soften_action,
+        // this only needs to run once, really...
+        this.project_action,
+        this.index_flatten,
+        this.index_colorize,
+        this.colorize_action,
+        this.flatten_action,
+        this.mix_action,
+        //this.gray_action, 
+        this.painter
+      ]);
+      this.sequence.run();
+    }
+    async debug_button_callback() {
+      debugger;
+      await this.index_panel.pull_buffer();
+      await this.depth_buffer.pull_buffer();
+      console.log("pipeline", this);
+    }
+    async run() {
+      await this.volume_future;
+      this.sequence.run();
+    }
+    get_orbiter_callback() {
+      const that = this;
+      function callback(affine_transform) {
+        that.change_parameters(affine_transform);
+      }
+      return callback;
+    }
+    change_parameters(affine_transform, ratio) {
+      if (affine_transform) {
+        const M = MM_product(
+          affine_transform,
+          this.affine_translation
+        );
+        this.projection_matrix = M;
+        this.project_action.change_matrix(M);
+        this.colorize_action.change_matrix(M);
+      }
+      if (ratio) {
+        this.mix_action.change_ratio(ratio);
+      }
+      this.run();
+    }
+  }
+  const mix_test = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    MixPipeline
+  }, Symbol.toStringTag, { value: "Module" }));
+  class ThresholdPipeline {
+    constructor(volume_url, canvas, slider) {
+      this.slider = slider;
+      this.canvas = canvas;
+      this.volume_url = volume_url;
+      this.connect_future = this.connect();
+      this.volume_future = this.load();
+    }
+    async connect() {
+      this.context = new Context();
+      await this.context.connect();
+    }
+    async load() {
+      const context2 = this.context;
+      const response = await fetch(this.volume_url);
+      const content = await response.blob();
+      const buffer = await content.arrayBuffer();
+      console.log("buffer", buffer);
+      const f32 = new Float32Array(buffer);
+      console.log("f32", f32);
+      this.volume_shape = f32.slice(0, 3);
+      this.volume_content = f32.slice(3);
+      const [K, J, I] = this.volume_shape;
+      const vol_rotation = eye(4);
+      vol_rotation[1][1] = -1;
+      const vol_translation = affine3d(null, [-K / 2, -J / 2, -I / 2]);
+      this.volume_matrix = MM_product(vol_rotation, vol_translation);
+      debugger;
+      await this.connect_future;
+      this.volume = context2.volume(
+        this.volume_shape,
+        this.volume_content,
+        this.volume_matrix,
+        Float32Array
+      );
+      console.log("input Volume", this.volume);
+      const mm = this.volume.min_value;
+      const MM = this.volume.max_value;
+      this.slider.min = mm;
+      this.slider.max = MM;
+      this.slider.value = (mm + MM) / 2;
+      this.slider.step = (MM - mm) / 100;
+      const MaxS = Math.max(K, J, I);
+      const side = Math.ceil(Math.sqrt(2) * MaxS);
+      this.output_shape = [side, side];
+      const default_depth = -1e4;
+      const default_value = -1e4;
+      this.depth_buffer = context2.depth_buffer(
+        this.output_shape,
+        default_depth,
+        default_value,
+        null,
+        //input_data,
+        null,
+        // input_depths,
+        Float32Array
+      );
+      this.threshold_value = 33e3;
+      this.initial_rotation = [
+        [0, 0, 1],
+        [1, 0, 0],
+        [0, 1, 0]
+      ];
+      this.affine_translation = affine3d(null, [-side / 2, -side / 2, -side]);
+      this.projection_matrix = MM_product(
+        affine3d(this.initial_rotation),
+        this.affine_translation
+      );
+      this.project_action = new ThresholdProject(
+        this.volume,
+        this.depth_buffer,
+        this.projection_matrix,
+        this.threshold_value
+      );
+      this.project_action.attach_to_context(context2);
+      const default_color = 0;
+      this.colorize_action = new NormalColorize(
+        this.volume,
+        this.depth_buffer,
+        this.projection_matrix,
+        default_color
+      );
+      this.colorize_action.attach_to_context(context2);
+      this.orbiter = new Orbiter(
+        this.canvas,
+        null,
+        // center,
+        this.initial_rotation,
+        this.get_orbiter_callback()
+        // callback,
+      );
+      const [height, width] = this.output_shape;
+      this.panel = context2.panel(width, height);
+      this.flatten_action = this.depth_buffer.flatten_action(this.panel);
+      this.grey_panel = context2.panel(width, height);
+      this.painter = context2.paint(this.panel, this.canvas);
+      this.sequence = context2.sequence([
+        this.project_action,
+        this.colorize_action,
+        this.flatten_action,
+        //this.gray_action, 
+        this.painter
+      ]);
+      this.sequence.run();
+    }
+    async run() {
+      await this.volume_future;
+      this.sequence.run();
+    }
+    get_orbiter_callback() {
+      const that = this;
+      function callback(affine_transform) {
+        that.change_parameters(affine_transform);
+      }
+      return callback;
+    }
+    change_parameters(affine_transform, threshold2) {
+      if (affine_transform) {
+        const M = MM_product(
+          affine_transform,
+          this.affine_translation
+        );
+        this.projection_matrix = M;
+        this.project_action.change_matrix(M);
+        this.colorize_action.change_matrix(M);
+      }
+      if (threshold2) {
+        this.project_action.change_threshold(threshold2);
+      }
+      this.run();
+    }
+  }
+  const threshold_test = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    ThresholdPipeline
+  }, Symbol.toStringTag, { value: "Module" }));
+  class TestDepthView extends View {
+    panel_sequence(context2) {
+      context2 = context2 || this.context;
+      const inputVolume = this.ofVolume;
+      this.min_value = inputVolume.min_value;
+      this.max_value = inputVolume.max_value;
+      const origin = [0, 0, 0, 1];
+      const projection = M_inverse(this.projection_matrix);
+      const porigin = Mv_product(projection, origin);
+      this.current_depth = porigin[2];
+      this.depth_buffer = this.get_output_depth_buffer(context2);
+      this.value_panel = this.get_output_panel(context2);
+      this.grey_panel = this.get_output_panel(context2);
+      this.project_action = new VolumeAtDepth(
+        this.ofVolume,
+        this.depth_buffer,
+        this.projection_matrix,
+        this.current_depth
+      );
+      this.project_action.attach_to_context(context2);
+      this.flatten_action = this.depth_buffer.flatten_action(this.value_panel);
+      this.gray_action = context2.to_gray_panel(
+        this.value_panel,
+        this.grey_panel,
+        this.min_value,
+        this.max_value
+      );
+      this.project_to_panel = context2.sequence([
+        this.project_action,
+        this.flatten_action,
+        this.gray_action
+      ]);
+      return {
+        sequence: this.project_to_panel,
+        output_panel: this.grey_panel
+      };
+    }
+    change_matrix(matrix) {
+      this.project_action.change_matrix(matrix);
+      this.change_range(matrix);
+    }
+    change_depth(depth) {
+      this.project_action.change_depth(depth);
+      this.run();
+    }
+    on_range_change(callback) {
+      this.range_change_callback = callback;
+      this.change_range(this.projection_matrix);
+    }
+    change_range(matrix) {
+      const callback = this.range_change_callback;
+      if (callback) {
+        const invert = true;
+        const range = this.ofVolume.projected_range(matrix, invert);
+        const min_depth = range.min[2];
+        const max_depth = range.max[2];
+        console.log("new range min", min_depth, "max", max_depth);
+        callback(min_depth, max_depth);
+      }
+    }
+  }
+  const vol_depth_view = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    TestDepthView
+  }, Symbol.toStringTag, { value: "Module" }));
   const name = "webgpu_volume";
   function context() {
     return new Context();
@@ -1959,28 +3276,53 @@
     return new CombineDepths(outputDB, inputDB, offset_ij, sign);
   }
   function volume(shape, data, ijk2xyz) {
-    return new Volume(shape, data, ijk2xyz);
+    return new Volume$1(shape, data, ijk2xyz);
   }
   function panel(width, height) {
     return new Panel(width, height);
   }
-  function paint_panel(panel2, to_canvas) {
-    return new PaintPanel(panel2, to_canvas);
+  function paint_panel(panel2, to_canvas2) {
+    return new PaintPanel(panel2, to_canvas2);
   }
   function sample_volume(shape, ijk2xyz, volumeToSample) {
     return new SampleVolume(shape, ijk2xyz, volumeToSample);
   }
-  function painter(rgbaImage, width, height, to_canvas) {
-    return new ImagePainter(rgbaImage, width, height, to_canvas);
+  function painter(rgbaImage, width, height, to_canvas2) {
+    return new ImagePainter(rgbaImage, width, height, to_canvas2);
   }
+  exports2.CPUVolume = CPUVolume;
+  exports2.CombineDepths = CombineDepths$1;
+  exports2.CopyAction = CopyAction;
+  exports2.DepthBufferRange = DepthBufferRange;
+  exports2.GPUAction = GPUAction;
   exports2.GPUColorPanel = GPUColorPanel;
   exports2.GPUContext = GPUContext;
+  exports2.GPUDataObject = GPUDataObject;
+  exports2.GPUDepthBuffer = GPUDepthBuffer;
   exports2.GPUVolume = GPUVolume;
+  exports2.IndexColorizePanel = IndexColorizePanel$1;
+  exports2.MaxProjection = MaxProjection;
+  exports2.MaxView = MaxView;
+  exports2.MixColorPanels = MixColorPanels;
+  exports2.MixView = MixView;
+  exports2.NormalAction = NormalAction;
   exports2.PaintPanel = PaintPanel$1;
+  exports2.PastePanel = PastePanel$1;
+  exports2.Projection = Projection;
   exports2.SampleVolume = SampleVolume$1;
+  exports2.Soften = Soften;
+  exports2.ThresholdAction = ThresholdAction;
+  exports2.ThresholdView = ThresholdView;
+  exports2.UpdateAction = UpdateAction$1;
+  exports2.UpdateGray = UpdateGray$1;
+  exports2.ViewVolume = ViewVolume;
+  exports2.VolumeAtDepth = VolumeAtDepth$1;
+  exports2.canvas_orbit = canvas_orbit;
   exports2.combine_depths = combine_depths;
+  exports2.combine_test = combine_test;
   exports2.context = context;
   exports2.depth_buffer = depth_buffer;
+  exports2.depth_range_view = depth_range_view;
   exports2.do_combine = do_combine;
   exports2.do_gray = do_gray;
   exports2.do_max_projection = do_max_projection;
@@ -1989,11 +3331,21 @@
   exports2.do_paste = do_paste;
   exports2.do_pipeline = do_pipeline;
   exports2.do_sample = do_sample;
+  exports2.gray_test = gray_test;
+  exports2.max_projection_test = max_projection_test;
+  exports2.mix_test = mix_test;
+  exports2.mousepaste = mousepaste;
   exports2.name = name;
   exports2.paint_panel = paint_panel;
+  exports2.paint_test = paint_test;
   exports2.painter = painter;
   exports2.panel = panel;
+  exports2.paste_test = paste_test;
+  exports2.pipeline_test = pipeline_test;
+  exports2.sample_test = sample_test;
   exports2.sample_volume = sample_volume;
+  exports2.threshold_test = threshold_test;
+  exports2.vol_depth_view = vol_depth_view;
   exports2.volume = volume;
   Object.defineProperty(exports2, Symbol.toStringTag, { value: "Module" });
 });
