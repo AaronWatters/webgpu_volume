@@ -8,7 +8,7 @@
 
 @group(2) @binding(0) var<storage, read> input_offset_ij_sign: vec3i;
 
-@compute @workgroup_size(8)
+@compute @workgroup_size(256)
 fn main(@builtin(global_invocation_id) global_id : vec3u) {
     let outputOffset = global_id.x;
     let outputShape = outputDB.shape;
@@ -18,19 +18,25 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         let inputShape = inputDB.shape;
         let inputLocation = depth_buffer_location_of(inputIndices, inputShape);
         if (inputLocation.valid) {
-            var inputDepth = inputDB.data_and_depth[inputLocation.depth_offset];
-            var outputDepth = outputDB.data_and_depth[outputLocation.depth_offset];
-            var sign = input_offset_ij_sign.z;
-            if (sign == 0) {
-                sign = 1;
-            }
-            if (((inputDepth - outputDepth) * f32(sign)) > 0.0) {
-                var inputData = inputDB.data_and_depth[inputLocation.data_offset];
-                if (!is_default(inputData, inputDepth, inputShape)) {
+            let inputDepth = inputDB.data_and_depth[inputLocation.depth_offset];
+            let inputData = inputDB.data_and_depth[inputLocation.data_offset];
+            if (!is_default(inputData, inputDepth, inputShape)) {
+                let outputDepth = outputDB.data_and_depth[outputLocation.depth_offset];
+                let outputData = outputDB.data_and_depth[outputLocation.data_offset];
+                if (is_default(outputData, outputDepth, outputShape) || 
+                    (((inputDepth - outputDepth) * f32(input_offset_ij_sign.z)) < 0.0)) {
                     outputDB.data_and_depth[outputLocation.depth_offset] = inputDepth;
                     outputDB.data_and_depth[outputLocation.data_offset] = inputData;
                 }
             }
+            // DEBUG
+            //outputDB.data_and_depth[outputLocation.depth_offset] = bitcast<f32>(0x99999999u);
+            //outputDB.data_and_depth[outputLocation.data_offset] = bitcast<f32>(0x99999999u);
+            
+        //} else {
+            // DEBUG
+            //outputDB.data_and_depth[outputLocation.depth_offset] = 55.5;
+            //outputDB.data_and_depth[outputLocation.data_offset] = 55.5;
         }
     }
 }
