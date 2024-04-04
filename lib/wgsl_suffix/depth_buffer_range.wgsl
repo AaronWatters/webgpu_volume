@@ -34,7 +34,9 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
             if (parms.do_values > 0) {
                 testValue = inputValue;
             }
-            if (parms.lower_bound <= testValue) && (testValue <= parms.upper_bound) {
+            if ((!is_default(inputValue, inputDepth, inputShape)) &&
+                (parms.lower_bound <= testValue) && 
+                (testValue <= parms.upper_bound)) {
                 current_depth = inputDepth;
                 current_value = inputValue;
             }
