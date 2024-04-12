@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Segmentation quad test page</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        display: relative; /* Changed to relative positioning */
+    }
+    .images {
+        position: relative; /* Added relative positioning */
+        flex: 1;
+        display: flex;
+    }
+    .image {
+        flex: 1;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        margin: 5px;
+    }
+    .slider-container {
+        width: 550px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: left;
+        margin-top: 10px;
+    }
+    .slider {
+        width: 222px;
+        margin: 20px auto;
+    }
+</style>
+</head>
+<body>
+<h1>Segmentation quad test page</h1>
+
+<p id="info">Information here.</p>
+
+
+<div class="slider-container">
+    <input type="range" min="0" max="360" id="depth-slider" class="slider">
+    <div class="slider-label">
+        <span>depth: &nbsp;</span>
+        <span id="depth-value">0</span>
+    </div>
+</div>
+
+<div class="container">
+    <div class="images">
+        <div class="image">
+            <canvas id="segmentation-slice" width="333" height="333"></canvas>
+        </div>
+        <div class="image">
+            <canvas id="segment-shading" width="333" height="333"></canvas>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="images">
+        <div class="image">
+            <canvas id="intensity-slice" width="333" height="333"></canvas>
+        </div>
+        <div class="image">
+            <canvas id="max-value" width="333" height="333"></canvas>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+
+    import * as SegmentationQuad from "../lib/actions/SegmentationQuad.js";
+    import * as CPUVolume from "../lib/data_objects/CPUVolume.js";
+    import * as GPUContext from "../lib/support/GPUContext.js";
+
+    function rndint() {
+        return Math.floor(Math.random() * 256);
+    };
+    function rnd_color() {
+        //return 0xffffffff;
+        return (
+            rndint() + 256 * (
+                rndint() + 256 * (
+                    rndint() + 256 * 255
+                )
+            )
+        );
+    }
+    const random_colors = [0];  // index 0 is invisible
+    for (let i=0; i<100; i++) {
+        random_colors.push(rnd_color());
+    }
+
+    const segmentationSlice = document.getElementById("segmentation-slice");
+    const segmentShading = document.getElementById("segment-shading");
+    const intensitySlice = document.getElementById("intensity-slice");
+    const maxValue = document.getElementById("max-value");
+    const info_para = document.getElementById("info");
+    const depthSlider = document.getElementById('depth-slider');
+    const depthValue = document.getElementById('depth-value');
+
+    function info(msg) {
+        info_para.textContent = msg;
+    };
+
+    const i24path = "../sample_data/i24.bin";
+    const l24path = "../sample_data/l24.bin";
+    var l24cpu, i24cpu, l24gpu, i24gpu, context, view;
+
+    async function go() {
+        context = new GPUContext.Context();
+        info("got gpu context");
+        const kind = Float32Array;
+        l24cpu = await CPUVolume.fetch_volume_prefixed(l24path, kind);
+        i24cpu = await CPUVolume.fetch_volume_prefixed(i24path, kind);
+        info('got cpu volumes');
+        const [dK, dJ, dI] = [1,1,1];
+        await context.connect();
+        l24gpu = l24cpu.gpu_volume(context, dK, dJ, dI);
+        i24gpu = i24cpu.gpu_volume(context, dK, dJ, dI);
+        info('got gpu volumes');
+        const colors = new Uint32Array(random_colors);
+        view = new SegmentationQuad.SegmentationQuad(l24gpu, i24gpu, colors, range_callback);
+        const orbiting = true;
+        view.paint_on_canvases(
+            segmentationSlice, maxValue, intensitySlice, segmentShading, orbiting
+        );
+        info('painted canvases');
+    };
+    
+    function range_callback(min_value, max_value) {
+        console.log("range_callback", min_value, max_value);
+        depthSlider.min = min_value;
+        depthSlider.max = max_value;
+        
+        const depth = view.current_depth;
+        if (min_value > depth) {
+            depthSlider.value = min_value;
+            depthSlide();
+        } else if (max_value < depth) {
+            depthSlider.value = max_value;
+            depthSlide();
+        } else {
+            depthSlider.value = view.current_depth;
+            depthValue.textContent = view.current_depth;
+        }
+    };
+
+    async function depthSlide() {
+        //await pipeline.volume_future;
+        const depth = depthSlider.value;
+        depthValue.textContent = depth;
+        view.change_depth(depth);
+        //view.update_levels();
+        //view.run();
+    };
+    depthSlider.addEventListener('input', depthSlide);
+
+
+    go();
+
+</script>
+</body>
