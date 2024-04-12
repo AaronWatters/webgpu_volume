@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test of ThresholdView</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .slider-container {
+        width: 550px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: left;
+        margin-top: 10px;
+    }
+    .slider {
+        width: 500px;
+        margin: 20px auto;
+    }
+</style>
+</head>
+<body>
+
+<h1>Test of ThresholdView</h1>
+
+<div class="slider-container">
+    <input type="range" min="31000" max="36000" id="threshold-slider" class="slider">
+    <div class="slider-label">
+        <span>threshold: &nbsp;</span>
+        <span id="threshold-value">0</span>
+    </div>
+</div>
+
+<canvas id="canvas" width="1000" height="1000"></canvas>
+
+<br>
+
+<button onclick="button_click()">debug button</button>
+
+<script type="module">
+    import * as ThresholdView from "../lib/actions/ThresholdView.js";
+    import * as CPUVolume from "../lib/data_objects/CPUVolume.js";
+    import * as GPUContext from "../lib/support/GPUContext.js";
+
+    //const file_path = "../cammy.bin";
+    //const file_path = "../sample_data/segmentation.bin";
+    //const file_path = "../sample_data/im8.bin";
+    //const file_path = "../sample_data/mri.bin";
+    //const file_path = "../waves.bin";
+
+    const frog_json = {
+        "name": "Frog",
+        "type": "uint8",
+        "size": [
+            256,
+            256,
+            44
+        ],
+        "spacing": [
+            0.5,
+            0.5,
+            1
+        ],
+        "sha512sum": "0421e05c1c3fdce41f96ac93d0ba59c0aed29bb9d53a5d395f859e737b67db19e6ab39806028bddc6e5b2acde1d97581f81745d380f141ae144cec923974b0d1",
+        "description": "MRI scan of a frog as part of the Whole Frog Project.",
+        "acknowledgement": "Lawrence Berkeley Laboratory, USA",
+        //"url": "https://klacansky.com/open-scivis-datasets/frog/frog_256x256x44_uint8.raw",
+        "url": "../sample_data/frog_256x256x44_uint8.raw",
+        "added": "2023-07-07",
+        "category": "MRI"
+    };
+
+    const aneurism_json = {
+        "name": "Aneurism",
+        "type": "uint8",
+        "size": [
+            256,
+            256,
+            256
+        ],
+        "spacing": [
+            1,
+            1,
+            1
+        ],
+        "sha512sum": "31f1232cbf75b0182f172375e46cc57fe013c0edaae292f2358e2477052ca974faae92efd803a2d229172b851b5ddaa461129872b89bd6ce45d43bfe595eed43",
+        "description": "Rotational C-arm x-ray scan of the arteries of the right half of a human head. A contrast agent was injected into the blood and an aneurism is present.",
+        "acknowledgement": "volvis.org and Philips Research, Hamburg, Germany",
+        //"url": "https://klacansky.com/open-scivis-datasets/aneurism/aneurism_256x256x256_uint8.raw",
+        "url": "../sample_data/aneurism_256x256x256_uint8.raw",
+        "category": "CT"
+    }
+ 
+    const thresholdSlider = document.getElementById('threshold-slider');
+    const thresholdValue = document.getElementById('threshold-value');
+
+    var context, view, cpu_volume, volume;
+    const canvas = document.getElementById('canvas');
+
+    async function go() {
+        debugger;
+        const json = frog_json;
+        //const json = aneurism_json;
+        const kind = Uint8Array;
+        const shape = json.size.slice();
+        shape.reverse();
+        const url = json.url;
+        cpu_volume = await CPUVolume.fetch_volume(shape, url, kind);
+        context = new GPUContext.Context();
+        await context.connect();
+        const spacing = json.spacing.slice();
+        spacing.reverse();
+        //const [dK, dJ, dI] = [1,1,1];
+        const [dK, dJ, dI] = spacing;
+        //const [dK, dJ, dI] = [.2,1,.5];
+        volume = cpu_volume.gpu_volume(context, dK, dJ, dI);
+        const soften = true;
+        //const soften = false;
+        view = new ThresholdView.Threshold(volume, soften);
+        view.paint_on(canvas, true);
+        thresholdValue.textContent = view.threshold_value;
+        thresholdSlider.min = view.min_value;
+        thresholdSlider.max = view.max_value;
+        thresholdSlider.value = view.threshold_value;
+    };
+    go();
+
+    async function onslide() {
+        //await pipeline.volume_future;
+        const threshold = thresholdSlider.value;
+        thresholdValue.textContent = threshold;
+        view.change_threshold(threshold);
+    };
+
+    thresholdSlider.addEventListener('input', onslide);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test of SlicedThresholdView</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .slider-container {
+        width: 550px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: left;
+        margin-top: 10px;
+    }
+    .slider {
+        width: 500px;
+        margin: 20px auto;
+    }
+</style>
+</head>
+<body>
+
+<h1>Trivial Test of SlicedThresholdView</h1>
+
+<div class="slider-container">
+    <input type="range" min="31000" max="36000" id="threshold-slider" class="slider">
+    <div class="slider-label">
+        <span>threshold: &nbsp;</span>
+        <span id="threshold-value">0</span>
+    </div>
+</div>
+
+<canvas id="canvas" width="1000" height="1000"></canvas>
+
+<br>
+
+<button onclick="button_click()">debug button</button>
+
+<script type="module">
+    //import * as ThresholdView from "../lib/actions/ThresholdView.js";
+    import * as SlicedThresholdView from "../lib/actions/SlicedThresholdView.js";
+    import * as CPUVolume from "../lib/data_objects/CPUVolume.js";
+    import * as GPUContext from "../lib/support/GPUContext.js";
+
+    //const file_path = "../cammy.bin";
+    //const file_path = "../sample_data/segmentation.bin";
+    //const file_path = "../sample_data/im8.bin";
+    //const file_path = "../sample_data/mri.bin";
+    //const file_path = "../waves.bin";
+
+    const volume_data = [
+        // layer 0
+        1, 1, 1,
+        1, 1, 1,
+        1, 1, 1,
+        // layer 1
+        1, 1, 1,
+        1, 1, 1,
+        1, 1, 1,
+        // layer 2
+        1, 1, 1,
+        1, 211, 1,
+        1, 1, 1,
+    ]
+ 
+    const thresholdSlider = document.getElementById('threshold-slider');
+    const thresholdValue = document.getElementById('threshold-value');
+
+    var context, view, cpu_volume, volume;
+    const canvas = document.getElementById('canvas');
+
+    async function go() {
+        debugger;
+        //const json = aneurism_json;
+        //const kind = Uint8Array;
+        const shape = [3,3,3]
+        cpu_volume = new CPUVolume.Volume(shape, volume_data);
+        context = new GPUContext.Context();
+        await context.connect();
+        const [dK, dJ, dI] = [1,1,1];
+        volume = cpu_volume.gpu_volume(context, dK, dJ, dI);
+        //const soften = true;
+        //const soften = false;
+        //view = new ThresholdView.Threshold(volume, soften);
+        const threshold = null;
+        const debugging = true;
+        view = new SlicedThresholdView.SlicedThreshold(volume, threshold, debugging);
+        view.paint_on(canvas, true);
+        thresholdValue.textContent = view.threshold_value;
+        thresholdSlider.min = view.min_value;
+        thresholdSlider.max = view.max_value;
+        thresholdSlider.value = view.threshold_value;
+    };
+    go();
+
+    async function onslide() {
+        //await pipeline.volume_future;
+        const threshold = thresholdSlider.value;
+        thresholdValue.textContent = threshold;
+        view.change_threshold(threshold);
+    };
+
+    thresholdSlider.addEventListener('input', onslide);
+</script>
+
+</body>
+</html>
