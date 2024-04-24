@@ -30,6 +30,19 @@
 
 <canvas id="canvas" width="1000" height="1000"></canvas>
 
+
+<br>
+<div id="pick-div">pick info here.</div>
+<br>
+<div id="depth-div">depth info here.</div>
+<br>
+<div id="xyz-div">xyz info here.</div>
+<br>
+<div id="ijk-div">ijk info here.</div>
+<br>
+<div id="offset-div">offset info here.</div>
+<br>
+<div id="data-div">data info here.</div>
 <br>
 
 <button onclick="button_click()">debug button</button>
@@ -48,6 +61,13 @@
     var context, view, cpu_volume, volume;
     const canvas = document.getElementById('canvas');
 
+    const pickDiv = document.getElementById('pick-div');
+    const depthDiv = document.getElementById('depth-div');
+    const xyzDiv = document.getElementById('xyz-div');
+    const ijkDiv = document.getElementById('ijk-div');
+    const offsetDiv = document.getElementById('offset-div');
+    const dataDiv = document.getElementById('data-div');
+
     async function go() {
         //debugger;
         const kind = Float32Array;
@@ -59,7 +79,37 @@
         volume = cpu_volume.gpu_volume(context, dK, dJ, dI);
         view = new MaxView.Max(volume);
         view.paint_on(canvas, true);
+        view.pick_on(canvas, pick_callback);
     };
+
+    function pick_callback(data) {
+        debugger;
+        const mx = data.maximum;
+        pickDiv.textContent = "picked " + data.panel_coords + " color " + Array.from(data.panel_color);
+        if (mx) {
+            depthDiv.textContent = "depth " + JSON.stringify(mx.depth) + " data " + JSON.stringify(mx.data);
+            xyzDiv.textContent = "xyz " + JSON.stringify(mx.xyz);
+            ijkDiv.textContent = "ijk " + JSON.stringify(mx.volume_ijk);
+            //offsetDiv.textContent = "offset " + JSON.stringify(data.volume_offset);
+            dataDiv.textContent = "data " + JSON.stringify(mx.volume_data);
+            // look for first match
+            const find = mx.volume_data;
+            var atindex = null;
+            const inarray = cpu_volume.data;
+            const found = inarray.findIndex((element, index) => {
+                atindex = index;
+                return element === find;
+            });
+            offsetDiv.textContent = "offset " + JSON.stringify(mx.volume_offset) + " found at " + atindex;
+        } else {
+            depthDiv.textContent = "no depth";
+            xyzDiv.textContent = "no xyz";
+            ijkDiv.textContent = "no ijk";
+            offsetDiv.textContent = "no offset";
+            dataDiv.textContent = "no data";
+        }
+    };
+
     go();
 </script>
 

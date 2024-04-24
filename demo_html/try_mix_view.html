@@ -40,6 +40,10 @@
 
 <br>
 
+<div id="pick-div">pick info here.</div>
+
+<br>
+
 <button onclick="button_click()">debug button</button>
 
 <script type="module">
@@ -73,6 +77,7 @@
 
     const ratioSlider = document.getElementById('ratio-slider');
     const ratioValue = document.getElementById('ratio-value');
+    const pickDiv = document.getElementById('pick-div');
     ratioSlider.value = ratio;
     ratioValue.textContent = ratio;
 
@@ -91,6 +96,12 @@
         const colors = new Uint32Array(random_colors);
         view = new MixView.Mix(volume, colors, ratio);
         view.paint_on(canvas, true);
+        view.pick_on(canvas, pick_callback, "mousemove");
+    };
+    function pick_callback(data) {
+        //console.log("picked", data);
+        //pickDiv.textContent = "picked " + JSON.stringify(data);
+        pickDiv.textContent = "picked " + data.panel_coords + " color " + data.panel_color;
     };
     go();
 

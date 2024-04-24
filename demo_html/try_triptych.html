@@ -69,6 +69,11 @@
         </div>
     </div>
 
+    <div id="pick-text">No pick yet.</div>
+    <div id="slice-text">No depth yet.</div>
+    <div id="max-text">No xyz yet.</div>
+    <div id="threshold-text">No ijk yet.</div>
+
     <script type="module">
         import * as Triptych from "../lib/actions/Triptych.js";
         import * as CPUVolume from "../lib/data_objects/CPUVolume.js";
@@ -104,6 +109,11 @@
         const depthSlider = document.getElementById('depth-slider');
         const depthValue = document.getElementById('depth-value');
 
+        const pickText = document.getElementById('pick-text');
+        const sliceText = document.getElementById('slice-text');
+        const maxText = document.getElementById('max-text');
+        const thresholdText = document.getElementById('threshold-text');
+
         var context, view, cpu_volume, volume;
 
         async function go() {
@@ -128,6 +138,31 @@
             thresholdSlider.min = view.min_value;
             thresholdSlider.max = view.max_value;
             thresholdSlider.value = view.threshold_value;
+            view.pick_on(iso_canvas, pick_callback);
+            view.pick_on(max_canvas, pick_callback);
+            view.pick_on(slice_canvas, pick_callback);
+        };
+
+        function pick_callback(data) {
+            pickText.textContent = "picked " + data.panel_coords;
+            const mx = data.max_depth;
+            const sl = data.slice_depth;
+            const th = data.threshold_depth;
+            if (mx) {
+                maxText.textContent = "max " + mx.data + " at " + mx.volume_ijk;
+            } else {
+                maxText.textContent = "no max";
+            }
+            if (sl) {
+                sliceText.textContent = "slice " + sl.data + " at " + sl.volume_ijk;
+            } else {
+                sliceText.textContent = "no slice";
+            }
+            if (th) {
+                thresholdText.textContent = "threshold " + th.volume_data + " at " + th.volume_ijk;
+            } else {
+                thresholdText.textContent = "no threshold";
+            }
         };
 
         function range_callback(min_value, max_value) {
