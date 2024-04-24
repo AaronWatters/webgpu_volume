@@ -57,12 +57,17 @@
 </div>
 
 <div class="container">
+    <div id="pick-div">pick info here.</div>
     <div class="images">
         <div class="image">
             <canvas id="segmentation-slice" width="444" height="444"></canvas>
+            <br>
+            <div id="slice-info">Segmentation slice info here.</div>
         </div>
         <div class="image">
             <canvas id="segment-shading" width="444" height="444"></canvas>
+            <br>
+            <div id="shading-info">Shaded segmentation info here.</div>
         </div>
     </div>
 </div>
@@ -70,9 +75,13 @@
     <div class="images">
         <div class="image">
             <canvas id="intensity-slice" width="444" height="444"></canvas>
+            <br>
+            <div id="intensity-info">Intensity info here.</div>
         </div>
         <div class="image">
             <canvas id="max-value" width="444" height="444"></canvas>
+            <br>
+            <div id="max-info">Max info here.</div>
         </div>
     </div>
 </div>
@@ -108,6 +117,11 @@
     const info_para = document.getElementById("info");
     const depthSlider = document.getElementById('depth-slider');
     const depthValue = document.getElementById('depth-value');
+    const pickDiv = document.getElementById('pick-div');
+    const sliceInfo = document.getElementById('slice-info');
+    const shadingInfo = document.getElementById('shading-info');
+    const intensityInfo = document.getElementById('intensity-info');
+    const maxInfo = document.getElementById('max-info');
 
     function info(msg) {
         info_para.textContent = msg;
@@ -135,7 +149,38 @@
         view.paint_on_canvases(
             segmentationSlice, maxValue, intensitySlice, segmentShading, orbiting
         );
+        view.pick_on(segmentationSlice, pick_callback);
+        view.pick_on(maxValue, pick_callback);
+        view.pick_on(intensitySlice, pick_callback);
+        view.pick_on(segmentShading, pick_callback);
         info('painted canvases');
+    };
+    function pick_callback(data) {
+        pickDiv.textContent = "picked " + data.panel_coords;
+        const mx = data.maximum;
+        const sl = data.intensity_slice;
+        const sg = data.segmentation;
+        const ss = data.segmentation_slice;
+        if (mx) {
+            maxInfo.textContent = "max " + mx.volume_data + " at " + mx.volume_ijk;
+        } else {
+            maxInfo.textContent = "no max";
+        }
+        if (sl) {
+            intensityInfo.textContent = "intensity " + sl.volume_data + " at " + sl.volume_ijk;
+        } else {
+            intensityInfo.textContent = "no intensity";
+        }
+        if (sg) {
+            shadingInfo.textContent = "shading " + sg.volume_data + " at " + sg.volume_ijk;
+        } else {
+            shadingInfo.textContent = "no shading";
+        }
+        if (ss) {
+            sliceInfo.textContent = "segmentation slice " + ss.volume_data + " at " + ss.volume_ijk;
+        } else {
+            sliceInfo.textContent = "no segmentation slice";
+        }
     };
     
     function range_callback(min_value, max_value) {
