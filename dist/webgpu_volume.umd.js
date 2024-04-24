@@ -415,6 +415,99 @@
     }
     return result;
   }
+  class NormalizedCanvasSpace {
+    constructor(canvas) {
+      this.canvas = canvas;
+    }
+    normalize(px, py) {
+      const brec = this.canvas.getBoundingClientRect();
+      this.brec = brec;
+      this.cx = brec.width / 2 + brec.left;
+      this.cy = brec.height / 2 + brec.top;
+      const offsetx = px - this.cx;
+      const offsety = -(py - this.cy);
+      const dx = offsetx * 2 / this.brec.width;
+      const dy = offsety * 2 / this.brec.height;
+      return [dx, dy];
+    }
+    normalize_event_coords(e) {
+      return this.normalize(e.clientX, e.clientY);
+    }
+  }
+  class PanelSpace {
+    constructor(height, width) {
+      this.height = height;
+      this.width = width;
+    }
+    normalized2ij([dx, dy]) {
+      const i = Math.floor((dy + 1) * this.height / 2);
+      const j = Math.floor((dx + 1) * this.width / 2);
+      return [i, j];
+    }
+    ij2normalized([i, j]) {
+      const dx = 2 * j / this.width - 1;
+      const dy = 2 * i / this.height - 1;
+      return [dx, dy];
+    }
+    /*
+    ij2offset([i, j]) {
+        // panels are indexed from lower left corner
+        if ((i < 0) || (i >= this.width) || (j < 0) || (j >= this.height)) {
+            return null;
+        }
+        return i + j * this.width;
+    };
+    */
+  }
+  class ProjectionSpace {
+    constructor(ijk2xyz) {
+      this.change_matrix(ijk2xyz);
+    }
+    change_matrix(ijk2xyz) {
+      this.ijk2xyz = ijk2xyz;
+      this.xyz2ijk = M_inverse(ijk2xyz);
+    }
+    ijk2xyz_v(ijk) {
+      return apply_affine3d(this.ijk2xyz, ijk);
+    }
+  }
+  class VolumeSpace extends ProjectionSpace {
+    constructor(ijk2xyz, shape) {
+      super(ijk2xyz);
+      this.shape = shape;
+    }
+    xyz2ijk_v(xyz) {
+      return apply_affine3d(this.xyz2ijk, xyz);
+    }
+    ijk2offset(ijk) {
+      const [depth, height, width] = this.shape.slice(0, 3);
+      var [layer, row, column] = ijk;
+      layer = Math.floor(layer);
+      row = Math.floor(row);
+      column = Math.floor(column);
+      if (column < 0 || column >= width || row < 0 || row >= height || layer < 0 || layer >= depth) {
+        return null;
+      }
+      return (layer * height + row) * width + column;
+    }
+    offset2ijk(offset) {
+      const [I, J, K] = this.shape.slice(0, 3);
+      const k = offset % K;
+      const j = Math.floor(offset / K) % J;
+      const i = Math.floor(offset / (K * J));
+      return [i, j, k];
+    }
+    xyz2offset(xyz) {
+      return this.ijk2offset(this.xyz2ijk_v(xyz));
+    }
+  }
+  const coordinates = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    NormalizedCanvasSpace,
+    PanelSpace,
+    ProjectionSpace,
+    VolumeSpace
+  }, Symbol.toStringTag, { value: "Module" }));
   const id4x4list = [
     1,
     0,
@@ -441,11 +534,11 @@
       if (!ijk2xyz) {
         ijk2xyz = list_as_M(id4x4list, 4, 4);
       }
-      this.set_ijk2xyz(ijk2xyz);
       this.data = null;
       this.min_value = null;
       this.max_value = null;
       this.set_shape(shape, data);
+      this.set_ijk2xyz(ijk2xyz);
       this.shape_offset = 0;
       this.ijk2xyz_offset = this.shape_offset + this.shape.length;
       this.xyz2ijk_offset = this.ijk2xyz_offset + this.ijk2xyz.length;
@@ -511,10 +604,20 @@
     }
     set_ijk2xyz(matrix) {
       this.matrix = matrix;
-      const inv = M_inverse(matrix);
+      this.space = new VolumeSpace(matrix, this.shape);
       const ListMatrix = M_column_major_order(matrix);
       this.ijk2xyz = ListMatrix;
-      this.xyz2ijk = M_column_major_order(inv);
+      this.xyz2ijk = M_column_major_order(this.space.xyz2ijk);
+    }
+    sample_at(xyz) {
+      if (!this.data) {
+        throw new Error("No data to sample.");
+      }
+      const offset = this.space.xyz2offset(xyz);
+      if (offset === null) {
+        return null;
+      }
+      return this.data[offset];
     }
     load_buffer(buffer) {
       buffer = buffer || this.gpu_buffer;
@@ -661,6 +764,15 @@
       this.width = width;
       this.height = height;
       this.size = size;
+    }
+    color_at([row, column]) {
+      if (column < 0 || column >= this.width || row < 0 || row >= this.height) {
+        return null;
+      }
+      const u32offset = column + row * this.width;
+      const bpe = Int32Array.BYTES_PER_ELEMENT;
+      const bytes = new Uint8Array(this.buffer_content, u32offset * bpe, bpe);
+      return bytes;
     }
   }
   const GPUColorPanel = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
@@ -994,10 +1106,6 @@
       super(fromVolume, toDepthBuffer);
       this.parameters = new MaxProjectionParameters(ijk2xyz, fromVolume, toDepthBuffer);
     }
-    //change_matrix(ijk2xyz) {
-    //    this.parameters.set_matrix(ijk2xyz);
-    //    this.parameters.push_buffer();
-    //};
     get_shader_module(context2) {
       const gpu_shader = volume_frame + depth_buffer$1 + volume_intercepts + max_value_project;
       return context2.device.createShaderModule({ code: gpu_shader });
@@ -1134,6 +1242,36 @@
       this.default_value = shape4[3];
       this.depths = mappedFloats.slice(this.depth_offset, this.depth_offset + this.size);
       return this.data;
+    }
+    location([row, column], projection_space, in_volume) {
+      const result = {};
+      if (column < 0 || column >= this.width || row < 0 || row >= this.height) {
+        return null;
+      }
+      const u32offset = column + row * this.width;
+      const data = this.data[u32offset];
+      const depth = this.depths[u32offset];
+      if (data == this.default_value && depth == this.default_depth) {
+        return null;
+      }
+      result.data = data;
+      result.depth = depth;
+      if (projection_space) {
+        const probe = [row, column, depth];
+        const xyz = projection_space.ijk2xyz_v(probe);
+        result.xyz = xyz;
+        if (in_volume) {
+          const volume_ijk = in_volume.space.xyz2ijk_v(xyz);
+          const int_ijk = volume_ijk.map((num) => Math.floor(num));
+          result.volume_ijk = int_ijk;
+          const volume_offset = in_volume.space.ijk2offset(volume_ijk);
+          result.volume_offset = volume_offset;
+          if (volume_offset != null) {
+            result.volume_data = in_volume.data[volume_offset];
+          }
+        }
+      }
+      return result;
     }
   }
   const GPUDepthBuffer = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
@@ -2320,8 +2458,37 @@
           // callback,
         );
       }
-      debugger;
       this.run();
+    }
+    pick_on(canvas, callback, etype) {
+      etype = etype || "click";
+      const canvas_space = new NormalizedCanvasSpace(canvas);
+      const [width, height] = this.output_shape;
+      this.panel_space = new PanelSpace(width, height);
+      const that = this;
+      canvas.addEventListener(etype, async function(event) {
+        const pick = await that.pick(event, canvas_space);
+        if (that.pick_callback) {
+          that.pick_callback(pick);
+        }
+      });
+      that.pick_callback = callback;
+    }
+    async pick(event, canvas_space) {
+      const normalized = canvas_space.normalize_event_coords(event);
+      const panel_space = this.panel_space;
+      const panel_coords = panel_space.normalized2ij(normalized);
+      var panel_color = null;
+      if (this.output_panel) {
+        await this.output_panel.pull_buffer();
+        panel_color = this.output_panel.color_at(panel_coords);
+      }
+      return {
+        normalized_coords: normalized,
+        panel_coords,
+        //panel_offset: panel_offset,
+        panel_color
+      };
     }
     set_geometry() {
       const [K, J, I] = this.ofVolume.shape;
@@ -2334,10 +2501,12 @@
         affine3d(this.initial_rotation),
         this.affine_translation
       );
+      this.space = new ProjectionSpace(this.projection_matrix);
     }
     canvas_paint_sequence(context2, canvas) {
       this.attach_to_context(context2);
       const projection = this.panel_sequence(context2);
+      this.output_panel = projection.output_panel;
       const painter2 = context2.paint(projection.output_panel, canvas);
       this.paint_sequence = context2.sequence([
         projection.sequence,
@@ -2358,11 +2527,36 @@
       this.run();
     }
     change_matrix(matrix) {
+      this.space = new ProjectionSpace(matrix);
     }
     get_orbiter_callback() {
       const that = this;
       return function(affine_transform) {
         return that._orbiter_callback(affine_transform);
+      };
+    }
+    orbit2xyz_v(ijk) {
+      return this.space.ijk2xyz_v(ijk);
+    }
+    xyz2volume_v(xyz) {
+      return this.ofVolume.space.xyz2ijk_v(xyz);
+    }
+    orbit2volume_v(ijk) {
+      return this.xyz2volume_v(this.orbit2xyz_v(ijk));
+    }
+    orbit_sample(ijk) {
+      const xyz = this.orbit2xyz_v(ijk);
+      const volume_indices = this.xyz2volume_v(xyz);
+      var volume_offset = this.ofVolume.space.ijk2offset(volume_indices);
+      var volume_sample = null;
+      if (this.data && volume_offset !== null) {
+        volume_sample = this.ofVolume.data[volume_offset];
+      }
+      return {
+        xyz,
+        volume_indices,
+        volume_offset,
+        volume_sample
       };
     }
     get_output_depth_buffer(context2, default_depth, default_value, kind) {
@@ -2412,6 +2606,17 @@
     View
   }, Symbol.toStringTag, { value: "Module" }));
   class Max extends View {
+    async pick(event, canvas_space) {
+      const result = await super.pick(event, canvas_space);
+      const panel_coords = result.panel_coords;
+      await this.max_depth_buffer.pull_data();
+      result.maximum = this.max_depth_buffer.location(
+        panel_coords,
+        this.space,
+        this.ofVolume
+      );
+      return result;
+    }
     panel_sequence(context2) {
       context2 = context2 || this.context;
       const inputVolume = this.ofVolume;
@@ -2451,6 +2656,7 @@
     //    sequence.run();
     //};
     change_matrix(matrix) {
+      super.change_matrix(matrix);
       this.project_action.change_matrix(matrix);
     }
   }
@@ -2588,10 +2794,6 @@
       this.threshold_value = threshold_value;
       this.parameters = new ThresholdParameters(ijk2xyz, fromVolume, threshold_value);
     }
-    //change_matrix(ijk2xyz) {
-    //    this.parameters.set_matrix(ijk2xyz);
-    //    this.parameters.push_buffer();
-    //};
     change_threshold(value) {
       this.threshold_value = value;
       this.parameters.threshold_value = value;
@@ -2634,10 +2836,6 @@
       this.default_value = default_value;
       this.parameters = new NormalParameters(ijk2xyz, default_value);
     }
-    //change_matrix(ijk2xyz) {
-    //    this.parameters.set_matrix(ijk2xyz);
-    //    this.parameters.push_buffer();
-    //};
     get_shader_module(context2) {
       const gpu_shader = volume_frame + depth_buffer$1 + normal_colors;
       return context2.device.createShaderModule({ code: gpu_shader });
@@ -2923,6 +3121,35 @@
         shaded_panel: mix_projections.output_panel
       };
     }
+    async pick(event, canvas_space) {
+      const result = await super.pick(event, canvas_space);
+      const panel_coords = result.panel_coords;
+      await this.maxView.max_depth_buffer.pull_data();
+      result.maximum = this.maxView.max_depth_buffer.location(
+        panel_coords,
+        this.space,
+        this.intensityVolume
+      );
+      await this.slice_depth_buffer.pull_data();
+      result.intensity_slice = this.slice_depth_buffer.location(
+        panel_coords,
+        this.space,
+        this.intensityVolume
+      );
+      await this.mixView.depth_buffer.pull_data();
+      result.segmentation = this.mixView.depth_buffer.location(
+        panel_coords,
+        this.space,
+        this.segmentationVolume
+      );
+      await this.segmentation_depth_buffer.pull_data();
+      result.segmentation_slice = this.segmentation_depth_buffer.location(
+        panel_coords,
+        this.space,
+        this.segmentationVolume
+      );
+      return result;
+    }
     change_depth(depth) {
       this.current_depth = depth;
       this.slice_project_action.change_depth(depth);
@@ -2930,6 +3157,7 @@
       this.run();
     }
     change_matrix(matrix) {
+      super.change_matrix(matrix);
       this.maxView.change_matrix(matrix);
       this.slice_project_action.change_matrix(matrix);
       this.segmentation_project_action.change_matrix(matrix);
@@ -3092,6 +3320,7 @@
     }
     // remainder is very similar to TestDepthView
     change_matrix(matrix) {
+      super.change_matrix(matrix);
       this.project_action.change_matrix(matrix);
       this.normal_colorize_action.change_matrix(matrix);
       this.level_project_action.change_matrix(matrix);
@@ -3191,6 +3420,7 @@
     };
     */
     change_matrix(matrix) {
+      super.change_matrix(matrix);
       this.project_action.change_matrix(matrix);
       this.colorize_action.change_matrix(matrix);
     }
@@ -3246,6 +3476,17 @@
         this.orbiter.attach_listeners_to(max_canvas);
       }
       this.run();
+    }
+    async pick(event, canvas_space) {
+      const result = await super.pick(event, canvas_space);
+      const panel_coords = result.panel_coords;
+      await this.slice_depth_buffer.pull_data();
+      result.slice_depth = this.slice_depth_buffer.location(panel_coords, this.space, this.ofVolume);
+      await this.max_depth_buffer.pull_data();
+      result.max_depth = this.max_depth_buffer.location(panel_coords, this.space, this.ofVolume);
+      await this.threshold_depth_buffer.pull_data();
+      result.threshold_depth = this.threshold_depth_buffer.location(panel_coords, this.space, this.ofVolume);
+      return result;
     }
     panel_sequence(context2) {
       debugger;
@@ -3342,6 +3583,7 @@
       this.run();
     }
     change_matrix(matrix) {
+      super.change_matrix(matrix);
       this.threshold_project_action.change_matrix(matrix);
       this.colorize_action.change_matrix(matrix);
       this.max_project_action.change_matrix(matrix);
@@ -3929,6 +4171,7 @@
   exports2.combine_depths = combine_depths;
   exports2.combine_test = combine_test;
   exports2.context = context;
+  exports2.coordinates = coordinates;
   exports2.depth_buffer = depth_buffer;
   exports2.depth_range_view = depth_range_view;
   exports2.do_combine = do_combine;
