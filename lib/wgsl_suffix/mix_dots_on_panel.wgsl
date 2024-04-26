@@ -18,6 +18,7 @@ struct dot {
 
 @group(2) @binding(0) var<storage, read> parms: parameters;
 
+/*
 fn debug_is_this_running(inputDot: dot) -> bool {
     let in_hw = parms.in_hw;
     let color = vec3f(1.0, 0.0, 1.0);
@@ -39,6 +40,7 @@ fn debug_is_this_running(inputDot: dot) -> bool {
     }
     return true;
 }
+*/
 
 @compute @workgroup_size(256) // ??? too big?
 fn main(@builtin(global_invocation_id) global_id : vec3u) {
