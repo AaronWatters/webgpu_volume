@@ -1,5 +1,8 @@
 # webgpu_volume
-WebGPU support for microscopy image processing.
+
+<img src="pancreas.png" width="300"/>
+
+WebGPU support for 3 dense dimensional volume image processing.
 
 Please see
 <a href="https://users.flatironinstitute.org/~awatters/volumes/html/listing.html">
