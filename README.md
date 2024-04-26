@@ -2,7 +2,7 @@
 
 <img src="pancreas.png" width="800"/>
 
-WebGPU support for 3 dense dimensional volume image processing.
+WebGPU support for 3 dimensional volume image processing.
 
 Please see
 <a href="https://users.flatironinstitute.org/~awatters/volumes/html/listing.html">
