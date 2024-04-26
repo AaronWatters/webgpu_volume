@@ -1,6 +1,6 @@
 # webgpu_volume
 
-<img src="pancreas.png" width="300"/>
+<img src="pancreas.png" width="800"/>
 
 WebGPU support for 3 dense dimensional volume image processing.
 
