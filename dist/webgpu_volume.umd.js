@@ -9,8 +9,12 @@
       this.usage_flags = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST;
       this.attached = false;
       this.buffer_content = null;
+      this.context = null;
     }
     attach_to_context(context2) {
+      if (this.context == context2) {
+        return this.gpu_buffer;
+      }
       if (this.attached) {
         throw new Error("cannot re-attach attached object.");
       }
@@ -971,6 +975,8 @@
       const source = this.source;
       const target = this.target;
       const parms = this.parameters;
+      source.attach_to_context(context2);
+      target.attach_to_context(context2);
       parms.attach_to_context(context2);
       const shaderModule = this.get_shader_module(context2);
       const targetLayout = target.bindGroupLayout("storage");
@@ -2468,11 +2474,10 @@
       const that = this;
       canvas.addEventListener(etype, async function(event) {
         const pick = await that.pick(event, canvas_space);
-        if (that.pick_callback) {
-          that.pick_callback(pick);
+        if (callback) {
+          callback(pick);
         }
       });
-      that.pick_callback = callback;
     }
     async pick(event, canvas_space) {
       const normalized = canvas_space.normalize_event_coords(event);
@@ -2605,7 +2610,7 @@
     __proto__: null,
     View
   }, Symbol.toStringTag, { value: "Module" }));
-  class Max extends View {
+  let Max$1 = class Max extends View {
     async pick(event, canvas_space) {
       const result = await super.pick(event, canvas_space);
       const panel_coords = result.panel_coords;
@@ -2659,10 +2664,10 @@
       super.change_matrix(matrix);
       this.project_action.change_matrix(matrix);
     }
-  }
+  };
   const MaxView = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
-    Max
+    Max: Max$1
   }, Symbol.toStringTag, { value: "Module" }));
   const mix_color_panels = "\n// suffix for pasting one panel onto another\n\nstruct parameters {\n    ratios: vec4f,\n    in_hw: vec2u,\n    out_hw: vec2u,\n}\n\n// Input and output panels interpreted as u32 rgba\n@group(0) @binding(0) var<storage, read> inputBuffer : array<u32>;\n\n@group(1) @binding(0) var<storage, read_write> outputBuffer : array<u32>;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // loop over input\n    let inputOffset = global_id.x;\n    let in_hw = parms.in_hw;\n    let in_location = panel_location_of(inputOffset, in_hw);\n    let out_hw = parms.out_hw;\n    let out_location = panel_location_of(inputOffset, out_hw);\n    if ((in_location.is_valid) && (out_location.is_valid)) {\n        let in_u32 = inputBuffer[in_location.offset];\n        let out_u32 = outputBuffer[out_location.offset];\n        let in_color = unpack4x8unorm(in_u32);\n        let out_color = unpack4x8unorm(out_u32);\n        let ratios = parms.ratios;\n        const ones = vec4f(1.0, 1.0, 1.0, 1.0);\n        let mix_color = ((ones - ratios) * out_color) + (ratios * in_color);\n        let mix_value = f_pack_color(mix_color.xyz);\n        outputBuffer[out_location.offset] = mix_value;\n    }\n}";
   let MixParameters$1 = class MixParameters extends DataObject {
@@ -2765,6 +2770,115 @@
   const MixDepthBuffers$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
     __proto__: null,
     MixDepthBuffers
+  }, Symbol.toStringTag, { value: "Module" }));
+  const mix_dots_on_panel = "\nstruct parameters {\n    in_hw: vec2u,\n    n_dots: u32,\n}\n\nstruct dot {\n    ratios: vec4f,\n    pos: vec2f,\n    radius: f32,\n    color: u32,\n}\n\n@group(0) @binding(0) var<storage, read> inputDots : array<dot>;\n\n// Output panel interpreted as u32 rgba\n@group(1) @binding(0) var<storage, read_write> outputBuffer : array<u32>;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n/*\nfn debug_is_this_running(inputDot: dot) -> bool {\n    let in_hw = parms.in_hw;\n    let color = vec3f(1.0, 0.0, 1.0);\n    var u32_color = f_pack_color(color);\n    let size = in_hw.x * in_hw.y;\n    for (var i=0u; i<in_hw.x; i+=1u) {\n        for (var j=0u; j<in_hw.y; j+=1u) {\n            let offset = panel_offset_of(vec2u(i, j), in_hw);\n            if (i > u32(inputDot.pos.x)) {\n                u32_color = f_pack_color(vec3f(0.0, 1.0, 0.0));\n                outputBuffer[offset.offset] = u32_color;\n            }\n            if (j > u32(inputDot.pos.y)) {\n                u32_color = f_pack_color(vec3f(0.0, 0.0, 1.0));\n                outputBuffer[offset.offset] = u32_color;\n            }\n            //outputBuffer[offset.offset] = u32_color;\n        }\n    }\n    return true;\n}\n*/\n\n@compute @workgroup_size(256) // ??? too big?\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // loop over input\n    let inputIndex = global_id.x;\n    let n_dots = parms.n_dots;\n    if (inputIndex >= n_dots) {\n        return;\n    }\n    let inputDot = inputDots[inputIndex];\n    //debug_is_this_running(inputDot);\n    let in_hw = parms.in_hw;\n    let inputOffset = inputDot.pos;\n    let radius = inputDot.radius;\n    let radius2 = radius * radius;\n    for (var di= - radius; di< radius; di+=1.0) {\n        for (var dj= - radius; dj< radius; dj+=1.0) {\n            if ((di*di + dj*dj <= radius2)) {\n                let location = vec2f(inputDot.pos.x + di, inputDot.pos.y + dj);\n                let offset = f_panel_offset_of(location, in_hw);\n                if (offset.is_valid) {\n                    let original_u32 = outputBuffer[offset.offset];\n                    let original_color = unpack4x8unorm(original_u32);\n                    let dot_u32 = inputDot.color;\n                    let dot_color = unpack4x8unorm(dot_u32);\n                    const ones = vec4f(1.0, 1.0, 1.0, 1.0);\n                    let ratios = inputDot.ratios;\n                    let mix_color = ((ones - ratios) * original_color) + (ratios * dot_color);\n                    let mix_value = f_pack_color(mix_color.xyz);\n                    outputBuffer[offset.offset] = mix_value;\n                }\n            }\n        }\n    }\n}\n";
+  class MixDotsParameters extends DataObject {
+    constructor(in_hw, n_dots) {
+      super();
+      this.in_hw = in_hw;
+      this.n_dots = n_dots;
+      this.buffer_size = 4 * Int32Array.BYTES_PER_ELEMENT;
+    }
+    load_buffer(buffer) {
+      buffer = buffer || this.gpu_buffer;
+      const arrayBuffer = buffer.getMappedRange();
+      const mappedUInts = new Uint32Array(arrayBuffer);
+      mappedUInts.set(this.in_hw, 0);
+      mappedUInts.set([this.n_dots], 2);
+    }
+    change_n_dots(n_dots) {
+      this.n_dots = n_dots;
+      this.push_buffer();
+    }
+  }
+  class ColoredDot {
+    constructor(position, radius, u32color, ratios) {
+      this.position = position;
+      this.radius = radius;
+      this.u32color = u32color;
+      this.ratios = ratios;
+    }
+    put_on_panel(index, mappedFloats, mappedUInts) {
+      const offset = index * 8;
+      mappedFloats.set(this.ratios, offset);
+      mappedFloats.set(this.position, offset + 4);
+      mappedFloats.set([this.radius], offset + 6);
+      mappedUInts.set([this.u32color], offset + 7);
+    }
+  }
+  class DotsPanel extends Panel {
+    constructor(max_ndots) {
+      super(8, max_ndots);
+      this.dots = [];
+      this.max_ndots = max_ndots;
+    }
+    add_dot(position, radius, u32color, ratios) {
+      const dot = new ColoredDot(position, radius, u32color, ratios);
+      if (this.dots.length >= this.max_ndots) {
+        throw new Error("Too many dots: " + this.dots.length);
+      }
+      this.dots.push(dot);
+    }
+    clear() {
+      this.dots = [];
+    }
+    load_buffer(buffer) {
+      buffer = buffer || this.gpu_buffer;
+      const arrayBuffer = buffer.getMappedRange();
+      const mappedUInts = new Uint32Array(arrayBuffer);
+      const mappedFloats = new Float32Array(arrayBuffer);
+      for (var i = 0; i < this.dots.length; i++) {
+        this.dots[i].put_on_panel(i, mappedFloats, mappedUInts);
+      }
+    }
+  }
+  class MixDotsOnPanel extends UpdateAction {
+    constructor(on_panel, max_ndots) {
+      super();
+      this.on_panel = on_panel;
+      this.max_ndots = max_ndots;
+      this.dots_panel = new DotsPanel(max_ndots);
+      const hw = [on_panel.height, on_panel.width];
+      this.parameters = new MixDotsParameters(hw, 0);
+      this.source = this.dots_panel;
+      this.target = on_panel;
+    }
+    get_shader_module(context2) {
+      const gpu_shader = panel_buffer + mix_dots_on_panel;
+      return context2.device.createShaderModule({ code: gpu_shader });
+    }
+    ndots() {
+      return this.dots_panel.dots.length;
+    }
+    push_dots() {
+      this.parameters.change_n_dots(this.ndots());
+      this.dots_panel.push_buffer();
+    }
+    add_pass(commandEncoder) {
+      if (this.ndots() < 1) {
+        return;
+      }
+      super.add_pass(commandEncoder);
+    }
+    getWorkgroupCounts() {
+      const ndots = this.ndots();
+      return [Math.ceil(ndots / 256), 1, 1];
+    }
+    clear(no_push = false) {
+      this.dots_panel.clear();
+      if (!no_push) {
+        this.push_dots();
+      }
+    }
+    add_dot(position, radius, u32color, ratios) {
+      this.dots_panel.add_dot(position, radius, u32color, ratios);
+    }
+  }
+  const MixDotsOnPanel$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    ColoredDot,
+    DotsPanel,
+    MixDotsOnPanel
   }, Symbol.toStringTag, { value: "Module" }));
   const threshold = "\n// Project a volume where the values cross a threshold\n// Assumes prefixes: \n//  panel_buffer.wgsl\n//  volume_frame.wgsl\n//  volume_intercept.wgsl\n\nstruct parameters {\n    ijk2xyz : mat4x4f,\n    int3: Intersections3,\n    dk: f32,\n    threshold_value: f32,\n    // 2 float padding at end...???\n}\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    //let local_parms = parms;\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    // k increment length in xyz space\n    //let dk = 1.0f;  // fix this! -- k increment length in xyz space\n    let dk = parms.dk;\n    var initial_value_found = false;\n    var compare_diff: f32;\n    var threshold_crossed = false;\n    if (outputLocation.valid) {\n        var inputGeometry = inputVolume.geometry;\n        var current_value = outputShape.default_value;\n        var current_depth = outputShape.default_depth;\n        let offsetij = vec2i(outputLocation.ij);\n        let ijk2xyz = parms.ijk2xyz;\n        var threshold_value = parms.threshold_value;\n        var end_points = scan_endpoints(\n            offsetij,\n            parms.int3,\n            &inputGeometry,\n            ijk2xyz,\n        );\n        if (end_points.is_valid) {\n            let offsetij_f = vec2f(offsetij);\n            for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += dk) {\n                //let ijkw = vec4u(vec2u(outputLocation.ij), depth, 1u);\n                //let f_ijk = vec4f(ijkw);\n                //let xyz_probe = parms.ijk2xyz * f_ijk;\n                let xyz_probe = probe_point(offsetij_f, depth, ijk2xyz);\n                let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);\n                if ((input_offset.is_valid) && (!threshold_crossed)) {\n                    let valueu32 = inputVolume.content[input_offset.offset];\n                    let value = bitcast<f32>(valueu32);\n                    let diff = value - threshold_value;\n                    if ((initial_value_found) && (!threshold_crossed)) {\n                        if (compare_diff * diff <= 0.0f) {\n                            threshold_crossed = true;\n                            current_depth = f32(depth);\n                            current_value = value;\n                            break;\n                        }\n                    }\n                    initial_value_found = true;\n                    compare_diff = diff;\n                }\n            }\n        }\n        outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;\n        outputDB.data_and_depth[outputLocation.data_offset] = current_value;\n    }\n}\n";
   class ThresholdParameters extends DataObject {
@@ -3060,7 +3174,7 @@
       this.change_range(this.projection_matrix);
       this.current_depth = (this.min_depth + this.max_depth) / 2;
       const actions_collector = [];
-      const maxView = new Max(this.intensityVolume);
+      const maxView = new Max$1(this.intensityVolume);
       this.maxView = maxView;
       maxView.attach_to_context(context2);
       const max_projections = maxView.panel_sequence(context2);
@@ -3609,6 +3723,72 @@
     __proto__: null,
     Triptych
   }, Symbol.toStringTag, { value: "Module" }));
+  class Max extends View {
+    async pick(event, canvas_space) {
+      const result = await super.pick(event, canvas_space);
+      const panel_coords = result.panel_coords;
+      await this.max_depth_buffer.pull_data();
+      result.maximum = this.max_depth_buffer.location(
+        panel_coords,
+        this.space,
+        this.ofVolume
+      );
+      return result;
+    }
+    panel_sequence(context2) {
+      context2 = context2 || this.context;
+      const inputVolume = this.ofVolume;
+      this.min_value = inputVolume.min_value;
+      this.max_value = inputVolume.max_value;
+      this.max_depth_buffer = this.get_output_depth_buffer(context2);
+      this.max_panel = this.get_output_panel(context2);
+      this.grey_panel = this.get_output_panel(context2);
+      this.project_action = context2.max_projection(
+        inputVolume,
+        this.max_depth_buffer,
+        this.projection_matrix
+      );
+      this.flatten_action = this.flatten_action = this.max_depth_buffer.flatten_action(
+        this.max_panel
+      );
+      this.gray_action = context2.to_gray_panel(
+        this.max_panel,
+        this.grey_panel,
+        this.min_value,
+        this.max_value
+      );
+      const max_dots = 1e3;
+      this.dots_action = new MixDotsOnPanel(
+        this.grey_panel,
+        max_dots
+      );
+      this.dots_action.attach_to_context(context2);
+      this.project_to_panel = context2.sequence([
+        this.project_action,
+        this.flatten_action,
+        this.gray_action,
+        this.dots_action
+      ]);
+      return {
+        sequence: this.project_to_panel,
+        output_panel: this.grey_panel
+      };
+    }
+    //_orbiter_callback(affine_transform) {
+    //    const matrix = qdVector.MM_product(affine_transform, this.projection_matrix);
+    //    this.project_action.change_matrix(matrix);
+    //    const sequence = this.paint_sequence || this.project_to_panel;
+    //    sequence.run();
+    //};
+    change_matrix(matrix) {
+      super.change_matrix(matrix);
+      this.project_action.change_matrix(matrix);
+    }
+  }
+  const MaxDotView = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    Max
+  }, Symbol.toStringTag, { value: "Module" }));
   class TestRangeView extends View {
     panel_sequence(context2) {
       context2 = context2 || this.context;
@@ -4147,10 +4327,12 @@
   exports2.GPUDepthBuffer = GPUDepthBuffer;
   exports2.GPUVolume = GPUVolume;
   exports2.IndexColorizePanel = IndexColorizePanel$1;
+  exports2.MaxDotView = MaxDotView;
   exports2.MaxProjection = MaxProjection;
   exports2.MaxView = MaxView;
   exports2.MixColorPanels = MixColorPanels;
   exports2.MixDepthBuffers = MixDepthBuffers$1;
+  exports2.MixDotsOnPanel = MixDotsOnPanel$1;
   exports2.MixView = MixView;
   exports2.NormalAction = NormalAction;
   exports2.PaintPanel = PaintPanel$1;
