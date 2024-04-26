@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test of ViewVolume with dot at pick location</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    .slider-container {
+        width: 550px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: left;
+        margin-top: 10px;
+    }
+    .slider {
+        width: 500px;
+        margin: 20px auto;
+    }
+</style>
+</head>
+<body>
+
+<h1>Test of ViewVolume with dot at pick location</h1>
+
+<canvas id="canvas" width="1000" height="1000"></canvas>
+
+
+<br>
+<div id="pick-div">pick info here.</div>
+<br>
+<div id="depth-div">depth info here.</div>
+<br>
+<div id="xyz-div">xyz info here.</div>
+<br>
+<div id="ijk-div">ijk info here.</div>
+<br>
+<div id="offset-div">offset info here.</div>
+<br>
+<div id="data-div">data info here.</div>
+<br>
+
+<button onclick="button_click()">debug button</button>
+
+<script type="module">
+    import * as MaxView from "../lib/proofs_of_concepts/MaxDotView.js";
+    import * as CPUVolume from "../lib/data_objects/CPUVolume.js";
+    import * as GPUContext from "../lib/support/GPUContext.js";
+
+    //const file_path = "../cammy.bin";
+    //const file_path = "../sample_data/segmentation.bin";
+    const file_path = "../sample_data/im8.bin";
+    //const file_path = "../sample_data/mri.bin";
+    //const file_path = "../waves.bin";
+ 
+    var context, view, cpu_volume, volume;
+    const canvas = document.getElementById('canvas');
+
+    const pickDiv = document.getElementById('pick-div');
+    const depthDiv = document.getElementById('depth-div');
+    const xyzDiv = document.getElementById('xyz-div');
+    const ijkDiv = document.getElementById('ijk-div');
+    const offsetDiv = document.getElementById('offset-div');
+    const dataDiv = document.getElementById('data-div');
+
+    async function go() {
+        //debugger;
+        const kind = Float32Array;
+        cpu_volume = await CPUVolume.fetch_volume_prefixed(file_path, kind);
+        context = new GPUContext.Context();
+        await context.connect();
+        //const [dK, dJ, dI] = [4, .4, 1];
+        const [dK, dJ, dI] = [1,1,1];
+        volume = cpu_volume.gpu_volume(context, dK, dJ, dI);
+        view = new MaxView.Max(volume);
+        view.paint_on(canvas, true);
+        view.pick_on(canvas, pick_callback);
+    };
+
+    function pick_callback(data) {
+        debugger;
+        const mx = data.maximum;
+        pickDiv.textContent = "picked " + data.panel_coords + " color " + Array.from(data.panel_color);
+        // dot at picked location
+        view.dots_action.clear(true);
+        const r = 0.3;
+        view.dots_action.add_dot(data.panel_coords, 3, 0xff0000ff, [r,r,r,r]);
+        view.dots_action.push_dots();
+        view.run();
+        if (mx) {
+            depthDiv.textContent = "depth " + JSON.stringify(mx.depth) + " data " + JSON.stringify(mx.data);
+            xyzDiv.textContent = "xyz " + JSON.stringify(mx.xyz);
+            ijkDiv.textContent = "ijk " + JSON.stringify(mx.volume_ijk);
+            //offsetDiv.textContent = "offset " + JSON.stringify(data.volume_offset);
+            dataDiv.textContent = "data " + JSON.stringify(mx.volume_data);
+            // look for first match
+            const find = mx.volume_data;
+            var atindex = null;
+            const inarray = cpu_volume.data;
+            const found = inarray.findIndex((element, index) => {
+                atindex = index;
+                return element === find;
+            });
+            offsetDiv.textContent = "offset " + JSON.stringify(mx.volume_offset) + " found at " + atindex;
+        } else {
+            depthDiv.textContent = "no depth";
+            xyzDiv.textContent = "no xyz";
+            ijkDiv.textContent = "no ijk";
+            offsetDiv.textContent = "no offset";
+            dataDiv.textContent = "no data";
+        }
+    };
+
+    go();
+</script>
+
+</body>
+</html>
