@@ -125,7 +125,8 @@
             const shape = json.size.slice();
             shape.reverse();
             const url = json.url;
-            cpu_volume = await CPUVolume.fetch_volume(shape, url, kind);const spacing = json.spacing.slice();
+            cpu_volume = await CPUVolume.fetch_volume(shape, url, kind);
+            const spacing = json.spacing.slice();
             spacing.reverse();
             //const [dK, dJ, dI] = [1,1,1];
             const [dK, dJ, dI] = spacing;
