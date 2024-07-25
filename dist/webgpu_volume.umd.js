@@ -648,15 +648,7 @@
     Volume: Volume$1
   }, Symbol.toStringTag, { value: "Module" }));
   const volume_frame = "\n// Framework for image volume data in WebGPU.\n\n\nstruct VolumeGeometry {\n    // Volume dimensions. IJK + error indicator.\n    shape : vec4u,\n    // Convert index space to model space,\n    ijk2xyz : mat4x4f,\n    // Inverse: convert model space to index space.\n    xyz2ijk : mat4x4f\n}\n\nstruct VolumeU32 {\n    geometry : VolumeGeometry,\n    content : array<u32>\n}\n\nalias Volume = VolumeU32;\n\nstruct IndexOffset {\n    offset : u32,\n    is_valid : bool\n}\n\nstruct OffsetIndex {\n    ijk: vec3u,\n    is_valid: bool\n}\n\n// Buffer offset for volume index ijk.\nfn offset_of(ijk : vec3u, geom : ptr<function, VolumeGeometry>) -> IndexOffset {\n    var result : IndexOffset;\n    var shape = (*geom).shape.xyz;\n    //result.is_valid = all(ijk.zxy < shape);\n    result.is_valid = all(ijk.xyz < shape);\n    if (result.is_valid) {\n        let layer = ijk.x;\n        let row = ijk.y;\n        let column = ijk.z;\n        let height = shape.y;\n        let width = shape.z;\n        result.offset = (layer * height + row) * width + column;\n    }\n    return result;\n}\n\n// Convert array offset to checked ijk index\nfn index_of(offset: u32, geom : ptr<function, VolumeGeometry>) -> OffsetIndex {\n    var result : OffsetIndex;\n    result.is_valid = false;\n    var shape = (*geom).shape;\n    let depth = shape.x;\n    let height = shape.y;\n    let width = shape.z;\n    let LR = offset / width;\n    let column = offset - (LR * width);\n    let layer = LR / height;\n    let row = LR - (layer * height);\n    if (layer < depth) {\n        result.ijk.x = layer;\n        result.ijk.y = row;\n        result.ijk.z = column;\n        result.is_valid = true;\n    }\n    return result;\n}\n\n// Convert float vector indices to checked unsigned index\nfn offset_of_f(ijk_f : vec3f, geom : ptr<function, VolumeGeometry>) -> IndexOffset {\n    var shape = (*geom).shape;\n    var result : IndexOffset;\n    result.is_valid = false;\n    if (all(ijk_f >= vec3f(0.0, 0.0, 0.0)) && all(ijk_f < vec3f(shape.xyz))) {\n        result = offset_of(vec3u(ijk_f), geom);\n    }\n    return result;\n}\n\n// Convert model xyz to index space (as floats)\nfn to_index_f(xyz : vec3f, geom : ptr<function, VolumeGeometry>) -> vec3f {\n    var xyz2ijk = (*geom).xyz2ijk;\n    let xyz1 = vec4f(xyz, 1.0);\n    let ijk1 = xyz2ijk * xyz1;\n    return ijk1.xyz;\n}\n\n// Convert index floats to model space.\nfn to_model_f(ijk_f : vec3f, geom : ptr<function, VolumeGeometry>) -> vec3f {\n    var ijk2xyz = (*geom).ijk2xyz;\n    let ijk1 = vec4f(ijk_f, 1.0);\n    let xyz1 = ijk2xyz * ijk1;\n    return xyz1.xyz;\n}\n\n// Convert unsigned int indices to model space.\nfn to_model(ijk : vec3u, geom : ptr<function, VolumeGeometry>) -> vec3f {\n    return to_model_f(vec3f(ijk), geom);\n}\n\n// Convert xyz model position to checked index offset.\nfn offset_of_xyz(xyz : vec3f, geom : ptr<function, VolumeGeometry>) -> IndexOffset {\n    return offset_of_f(to_index_f(xyz, geom), geom);\n}";
-  const volume_frame$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: volume_frame
-  }, Symbol.toStringTag, { value: "Module" }));
   const depth_buffer$1 = '\n// Framework for 4 byte depth buffer\n\n// keep everything f32 for simplicity of transfers\n\nstruct depthShape {\n    height: f32,\n    width: f32,\n    // "null" marker depth and value.\n    default_depth: f32,\n    default_value: f32,\n}\n\nfn is_default(value: f32, depth:f32, for_shape: depthShape) -> bool {\n    return (for_shape.default_depth == depth) && (for_shape.default_value == value);\n}\n\nstruct DepthBufferF32 {\n    // height/width followed by default depth and default value.\n    shape: depthShape,\n    // content data followed by depth as a single array\n    data_and_depth: array<f32>,\n}\n\nstruct BufferLocation {\n    data_offset: u32,\n    depth_offset: u32,\n    ij: vec2i,\n    valid: bool,\n}\n\n// 2d u32 indices to array locations\nfn depth_buffer_location_of(ij: vec2i, shape: depthShape) -> BufferLocation {\n    var result : BufferLocation;\n    result.ij = ij;\n    let width = u32(shape.width);\n    let height = u32(shape.height);\n    let row = ij.x;\n    let col = ij.y;\n    let ucol = u32(col);\n    let urow = u32(row);\n    result.valid = ((row >= 0) && (col >= 0) && (urow < height) && (ucol < width));\n    if (result.valid) {\n        result.data_offset = urow * width + ucol;\n        result.depth_offset = height * width + result.data_offset;\n    }\n    return result;\n}\n\n// 2d f32 indices to array locations\nfn f_depth_buffer_location_of(xy: vec2f, shape: depthShape) -> BufferLocation {\n    return depth_buffer_location_of(vec2i(xy.xy), shape);\n}\n\nfn depth_buffer_indices(data_offset: u32, shape: depthShape) -> BufferLocation {\n    var result : BufferLocation;\n    let width = u32(shape.width);\n    let height = u32(shape.height);\n    let size = width * height;\n    result.valid = (data_offset < size);\n    if (result.valid) {\n        result.data_offset = data_offset;\n        result.depth_offset = size + data_offset;\n        let row = data_offset / width;\n        let col = data_offset - (row * width);\n        result.ij = vec2i(i32(row), i32(col));\n    }\n    return result;\n}';
-  const depth_buffer$2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: depth_buffer$1
-  }, Symbol.toStringTag, { value: "Module" }));
   function volume_shader_code(suffix, context2) {
     const gpu_shader = volume_frame + suffix;
     return context2.device.createShaderModule({ code: gpu_shader });
@@ -705,10 +697,6 @@
     volume_shader_code
   }, Symbol.toStringTag, { value: "Module" }));
   const embed_volume = "\n// Suffix for testing frame operations.\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputVolume : Volume;\n\n// xxxx add additional transform matrix\n\n@compute @workgroup_size(8)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    var inputGeometry = inputVolume.geometry;\n    let inputOffset = global_id.x;\n    let inputIndex = index_of(inputOffset, &inputGeometry);\n    if (inputIndex.is_valid) {\n        var outputGeometry = outputVolume.geometry;\n        let xyz = to_model(inputIndex.ijk, &inputGeometry);\n        let out_offset = offset_of_xyz(xyz, &outputGeometry);\n        if (out_offset.is_valid) {\n            outputVolume.content[out_offset.offset] = inputVolume.content[inputOffset];\n        }\n    }\n}";
-  const embed_volume$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: embed_volume
-  }, Symbol.toStringTag, { value: "Module" }));
   class SampleVolume extends Action {
     constructor(shape, ijk2xyz, volumeToSample) {
       super();
@@ -796,10 +784,6 @@
     Panel
   }, Symbol.toStringTag, { value: "Module" }));
   const painter_code = "\n// Paint colors to rectangle\nstruct Out {\n    @builtin(position) pos: vec4<f32>,\n    @location(0) color: vec4<f32>,\n}\n\nstruct uniforms_struct {\n    width: f32,\n    height: f32,\n    x0: f32,\n    y0: f32,\n    dx: f32,\n    dy: f32,\n    //minimum: f32,\n    //maximum: f32,\n}\n\n@binding(0) @group(0) var<uniform> uniforms: uniforms_struct;\n\n@vertex fn vertexMain(\n    @builtin(vertex_index) vi : u32,\n    @builtin(instance_index) ii : u32,\n    @location(0) color: u32,\n) -> Out {\n    let width = u32(uniforms.width);\n    let height = u32(uniforms.height);\n    let x0 = uniforms.x0;\n    let y0 = uniforms.y0;\n    let dw = uniforms.dx;\n    let dh = uniforms.dy;\n    const pos = array(\n        // lower right triangle of pixel\n        vec2f(0, 0), \n        vec2f(1, 0), \n        vec2f(1, 1),\n        // upper left triangle of pixel\n        vec2f(1, 1), \n        vec2f(0, 1), \n        vec2f(0, 0)\n    );\n    let row = ii / width;\n    let col = ii % width;\n    let offset = pos[vi];\n    let x = x0 + dw * (offset.x + f32(col));\n    let y = y0 + dh * (offset.y + f32(row));\n    let colorout = unpack4x8unorm(color);\n    return Out(vec4<f32>(x, y, 0., 1.), colorout);\n}\n\n@fragment fn fragmentMain(@location(0) color: vec4<f32>) \n-> @location(0) vec4f {\n    return color;\n}\n";
-  const Painter = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: painter_code
-  }, Symbol.toStringTag, { value: "Module" }));
   function grey_to_rgba(grey_bytes) {
     console.log("converting grey to rgba");
     const ln = grey_bytes.length;
@@ -1102,15 +1086,7 @@
     intersection_buffer
   }, Symbol.toStringTag, { value: "Module" }));
   const volume_intercepts = "\n// Logic for loop boundaries in volume scans.\n// This prefix assumes volume_frame.wgsl and depth_buffer.wgsl.\n\n// v2 planar xyz intersection parameters:\n// v2 ranges from c0 * v0 + c1 * v1 + low to ... + high\nstruct Intersection2 {\n    c0: f32,\n    c1: f32,\n    low: f32,\n    high: f32,\n}\n\n// Intersection parameters for box borders\nalias Intersections3 = array<Intersection2, 3>;\n\n// Intersection end points\nstruct Endpoints2 {\n    offset: vec2f,\n    is_valid: bool,\n}\n\nfn scan_endpoints(\n    offset: vec2i, \n    int3: Intersections3, \n    geom_ptr: ptr<function, VolumeGeometry>, \n    ijk2xyz: mat4x4f,  // orbit to model affine matrix\n) -> Endpoints2 {\n    var initialized = false;\n    var result: Endpoints2;\n    result.is_valid = false;\n    for (var index=0; index<3; index++) {\n        let intersect = int3[index];\n        let ep = intercepts2(offset, intersect);\n        if (ep.is_valid) {\n            if (!initialized) {\n                result = ep;\n                initialized = true;\n            } else {\n                result = intersect2(result, ep);\n            }\n        }\n    }\n    if (result.is_valid) {\n        // verify that midpoint lies inside geometry\n        let low = result.offset[0];\n        let high = result.offset[1];\n        let mid = (low + high) / 2;\n        let mid_probe = probe_point(vec2f(offset), mid, ijk2xyz);\n        //let low_probe = probe_point(offset, low, ijk2xyz);\n        //let high_probe = probe_point(offset, high, ijk2xyz);\n        //let mid_probe = 0.5 * (low_probe + high_probe);\n        //let mid_probe = low_probe; // debugging\n        let mid_offset = offset_of_xyz(mid_probe, geom_ptr);\n        result.is_valid = mid_offset.is_valid;\n        // DEBUGGING\n        result.is_valid = true;\n    }\n    return result;\n}\n\nfn probe_point(offset: vec2f, depth: f32, ijk2xyz: mat4x4f) -> vec3f {\n    let ijkw = vec4f(vec2f(offset), f32(depth), 1.0);\n    let xyzw = ijk2xyz * ijkw;\n    return xyzw.xyz;\n}\n\nfn intercepts2(offset: vec2i, intc: Intersection2) -> Endpoints2 {\n    var result: Endpoints2;\n    let x = (intc.c0 * f32(offset[0])) + (intc.c1 * f32(offset[1]));\n    let high = floor(x + intc.high);\n    let low = ceil(x + intc.low);\n    result.is_valid = (high > low);\n    result.offset = vec2f(low, high);\n    return result;\n}\n\nfn intersect2(e1: Endpoints2, e2: Endpoints2) -> Endpoints2 {\n    var result = e1;\n    if (!e1.is_valid) {\n        result = e2;\n    } else {\n        if (e2.is_valid) {\n            let low = max(e1.offset[0], e2.offset[0]);\n            let high = min(e1.offset[1], e2.offset[1]);\n            result.offset = vec2f(low, high);\n            result.is_valid = (low <= high);\n        }\n    }\n    return result;\n}\n";
-  const volume_intercepts$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: volume_intercepts
-  }, Symbol.toStringTag, { value: "Module" }));
   const max_value_project = "\n// Project a volume by max value onto a depth buffer (suffix)\n// Assumes prefixes: \n//  depth_buffer.wgsl\n//  volume_frame.wgsl\n//  volume_intercept.wgsl\n\nstruct parameters {\n    ijk2xyz : mat4x4f,\n    int3: Intersections3,\n    dk: f32,  // k increment for probe\n    // 3 floats padding at end...???\n}\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    //let local_parms = parms;\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    // k increment length in xyz space\n    //let dk = 1.0f;  // fix this! -- k increment length in xyz space\n    let dk = parms.dk;\n    var initial_value_found = false;\n    if (outputLocation.valid) {\n        var inputGeometry = inputVolume.geometry;\n        var current_value = outputShape.default_value;\n        var current_depth = outputShape.default_depth;\n        let offsetij = vec2i(outputLocation.ij);\n        let ijk2xyz = parms.ijk2xyz;\n        var end_points = scan_endpoints(\n            offsetij,\n            parms.int3,\n            &inputGeometry,\n            ijk2xyz,\n        );\n        if (end_points.is_valid) {\n            let offsetij_f = vec2f(offsetij);\n            for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += dk) {\n                //let ijkw = vec4i(offsetij, depth, 1);\n                //let f_ijk = vec4f(ijkw);\n                //let xyz_probe = parms.ijk2xyz * f_ijk;\n                let xyz_probe = probe_point(offsetij_f, depth, ijk2xyz);\n                let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);\n                if (input_offset.is_valid) {\n                    let valueu32 = inputVolume.content[input_offset.offset];\n                    let value = bitcast<f32>(valueu32);\n                    if ((!initial_value_found) || (value > current_value)) {\n                        current_depth = f32(depth);\n                        current_value = value;\n                        initial_value_found = true;\n                    }\n                    // debug\n                    //let t = outputOffset/2u;\n                    //if (t * 2 == outputOffset) {\n                    //    current_value = bitcast<f32>(inputVolume.content[0]);\n                    //}\n                    // end debug\n                }\n            }\n        }\n        outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;\n        outputDB.data_and_depth[outputLocation.data_offset] = current_value;\n    }\n}\n";
-  const max_value_project$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: max_value_project
-  }, Symbol.toStringTag, { value: "Module" }));
   class MaxProjectionParameters extends DataObject {
     constructor(ijk2xyz, volume2, depthBuffer) {
       super();
@@ -1309,20 +1285,8 @@
     DepthBuffer
   }, Symbol.toStringTag, { value: "Module" }));
   const convert_gray_prefix = "\n// Prefix for converting f32 to rgba gray values.\n// Prefix for convert_buffer.wgsl\n\nstruct parameters {\n    input_start: u32,\n    output_start: u32,\n    length: u32,\n    min_value: f32,\n    max_value: f32,\n}\n\nfn new_out_value(in_value: u32, out_value: u32, parms: parameters) -> u32 {\n    let in_float = bitcast<f32>(in_value);\n    let min_value = parms.min_value;\n    let max_value = parms.max_value;\n    let in_clamp = clamp(in_float, min_value, max_value);\n    let intensity = (in_clamp - min_value) / (max_value - min_value);\n    let gray_level = u32(intensity * 255.0);\n    //let color = vec4u(gray_level, gray_level, gray_level, 255u);\n    //let result = pack4xU8(color); ???error: unresolved call target 'pack4xU8'\n    let result = gray_level + 256 * (gray_level + 256 * (gray_level + 256 * 255));\n    //let result = 255u + 256 * (gray_level + 256 * (gray_level + 256 * gray_level));\n    return result;\n}";
-  const convert_gray_prefix$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: convert_gray_prefix
-  }, Symbol.toStringTag, { value: "Module" }));
   const convert_buffer = "\n// Suffix for converting or combining data from one data object buffer to another.\n\n// Assume that prefix defines struct parameters with members\n//   - input_start: u32\n//   - output_start: u32\n//   - length: u32\n// as well as any other members needed for conversion.\n//\n// And fn new_out_value(in_value: u32, out_value: u32, parms: parameters) -> u32 {...}\n\n\n@group(0) @binding(0) var<storage, read> inputBuffer : array<u32>;\n\n@group(1) @binding(0) var<storage, read_write> outputBuffer : array<u32>;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // make a copy of parms for local use...\n    let local_parms = parms;\n    let offset = global_id.x;\n    let length = parms.length;\n    if (offset < length) {\n        let input_start = parms.input_start;\n        let output_start = parms.output_start;\n        let input_value = inputBuffer[input_start + offset];\n        let output_index = output_start + offset;\n        let output_value = outputBuffer[output_index];\n        let new_output_value = new_out_value(input_value, output_value, local_parms);\n        outputBuffer[output_index] = new_output_value;\n    }\n}\n";
-  const convert_buffer$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: convert_buffer
-  }, Symbol.toStringTag, { value: "Module" }));
   const convert_depth_buffer = '\n\n// Suffix for converting or combining data from one depth buffer buffer to another.\n// This respects depth buffer default (null) markers.\n\n// Assume that prefix defines struct parameters with members needed for conversion.\n//\n// And fn new_out_value(in_value: u32, out_value: u32, parms: parameters) -> u32 {...}\n//\n// Requires "depth_buffer.wgsl".\n\n@group(0) @binding(0) var<storage, read> inputDB : DepthBufferF32;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // make a copy of parms for local use...\n    let local_parms = parms;\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    if (outputLocation.valid) {\n        var current_value = outputShape.default_value; // ???\n        var current_depth = outputShape.default_depth;\n        let inputIndices = outputLocation.ij;\n        let inputShape = inputDB.shape;\n        let inputLocation = depth_buffer_location_of(inputIndices, inputShape);\n        if (inputLocation.valid) {\n            let inputDepth = inputDB.data_and_depth[inputLocation.depth_offset];\n            let inputValue = inputDB.data_and_depth[inputLocation.data_offset];\n            if (!is_default(inputValue, inputDepth, inputShape)) {\n                let Uvalue = bitcast<u32>(inputValue);\n                let Ucurrent = bitcast<u32>(current_value);\n                current_value = bitcast<f32>( new_out_value(Uvalue, Ucurrent, local_parms));\n                current_depth = inputDepth;\n            }\n        }\n        outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;\n        outputDB.data_and_depth[outputLocation.data_offset] = current_value;\n    }\n}';
-  const convert_depth_buffer$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: convert_depth_buffer
-  }, Symbol.toStringTag, { value: "Module" }));
   class GrayParameters extends DataObject {
     constructor(input_start, output_start, length, min_value, max_value) {
       super();
@@ -1665,10 +1629,6 @@
     do_paint1
   }, Symbol.toStringTag, { value: "Module" }));
   const combine_depth_buffers = '\n// Suffix pasting input depth buffer over output where depth dominates\n// Requires "depth_buffer.wgsl"\n\n@group(0) @binding(0) var<storage, read> inputDB : DepthBufferF32;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> input_offset_ij_sign: vec3i;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    if (outputLocation.valid) {\n        let inputIndices = outputLocation.ij + input_offset_ij_sign.xy;\n        let inputShape = inputDB.shape;\n        let inputLocation = depth_buffer_location_of(inputIndices, inputShape);\n        if (inputLocation.valid) {\n            let inputDepth = inputDB.data_and_depth[inputLocation.depth_offset];\n            let inputData = inputDB.data_and_depth[inputLocation.data_offset];\n            if (!is_default(inputData, inputDepth, inputShape)) {\n                let outputDepth = outputDB.data_and_depth[outputLocation.depth_offset];\n                let outputData = outputDB.data_and_depth[outputLocation.data_offset];\n                if (is_default(outputData, outputDepth, outputShape) || \n                    (((inputDepth - outputDepth) * f32(input_offset_ij_sign.z)) < 0.0)) {\n                    outputDB.data_and_depth[outputLocation.depth_offset] = inputDepth;\n                    outputDB.data_and_depth[outputLocation.data_offset] = inputData;\n                }\n            }\n            // DEBUG\n            //outputDB.data_and_depth[outputLocation.depth_offset] = bitcast<f32>(0x99999999u);\n            //outputDB.data_and_depth[outputLocation.data_offset] = bitcast<f32>(0x99999999u);\n            \n        //} else {\n            // DEBUG\n            //outputDB.data_and_depth[outputLocation.depth_offset] = 55.5;\n            //outputDB.data_and_depth[outputLocation.data_offset] = 55.5;\n        }\n    }\n}';
-  const combine_depth_buffers$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: combine_depth_buffers
-  }, Symbol.toStringTag, { value: "Module" }));
   class CombinationParameters extends DataObject {
     // xxxx possibly refactor/generalize this.
     constructor(offset_ij, sign) {
@@ -1830,15 +1790,7 @@
     do_combine
   }, Symbol.toStringTag, { value: "Module" }));
   const panel_buffer = "\n// Framework for panel buffer structure\n// A panel consists of a buffer representing a rectangular screen region.\n// with height and width.\n\nstruct PanelOffset {\n    offset: u32,\n    ij: vec2u,\n    is_valid: bool\n}\n\nfn panel_location_of(offset: u32, height_width: vec2u)-> PanelOffset  {\n    // location of buffer offset in row/col form.\n    let height = height_width[0];\n    let width = height_width[1];\n    var result : PanelOffset;\n    result.offset = offset;\n    result.is_valid = (offset < width * height);\n    if (result.is_valid) {\n        let row = offset / width;\n        let col = offset - row * width;\n        result.ij = vec2u(row, col);\n    }\n    return result;\n}\n\nfn panel_offset_of(ij: vec2u, height_width: vec2u) -> PanelOffset {\n    // buffer offset of row/col\n    var result : PanelOffset;\n    result.is_valid = all(ij < height_width);\n    if (result.is_valid) {\n        //const height = height_width[0];\n        let width = height_width[1];\n        result.offset = ij[0] * width + ij[1];\n        result.ij = ij;\n    }\n    return result;\n}\n\nfn f_panel_offset_of(xy: vec2f, height_width: vec2u)-> PanelOffset {\n    // buffer offset of vec2f row/col\n    var result : PanelOffset;\n    result.is_valid = ((xy[0] >= 0.0) && (xy[1] >= 0.0));\n    if (result.is_valid) {\n        result = panel_offset_of(vec2u(xy), height_width);\n    }\n    return result;\n}\n\n// xxxx this should be a builtin 'pack4xU8'...\nfn f_pack_color(color: vec3f) -> u32 {\n    let ucolor = vec3u(clamp(\n        255.0 * color, \n        vec3f(0.0, 0.0, 0.0),\n        vec3f(255.0, 255.0, 255.0)));\n    return ucolor[0] + \n        256u * (ucolor[1] + 256u * (ucolor[2] + 256u * 255u));\n}\n";
-  const panel_buffer$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: panel_buffer
-  }, Symbol.toStringTag, { value: "Module" }));
   const paste_panel = "\n// suffix for pasting one panel onto another\n\nstruct parameters {\n    in_hw: vec2u,\n    out_hw: vec2u,\n    offset: vec2i,\n}\n\n@group(0) @binding(0) var<storage, read> inputBuffer : array<u32>;\n\n@group(1) @binding(0) var<storage, read_write> outputBuffer : array<u32>;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // input expected to be smaller, so loop over input\n    let inputOffset = global_id.x;\n    let in_hw = parms.in_hw;\n    let in_location = panel_location_of(inputOffset, in_hw);\n    if (in_location.is_valid) {\n        let paste_location = vec2f(parms.offset) + vec2f(in_location.ij);\n        let out_hw = parms.out_hw;\n        let out_location = f_panel_offset_of(paste_location, out_hw);\n        if (out_location.is_valid) {\n            let value = inputBuffer[in_location.offset];\n            outputBuffer[out_location.offset] = value;\n        }\n    }\n}";
-  const paste_panel$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: paste_panel
-  }, Symbol.toStringTag, { value: "Module" }));
   class PasteParameters extends DataObject {
     constructor(in_hw, out_hw, offset) {
       super();
@@ -2402,10 +2354,6 @@
     fetch_volume_prefixed
   }, Symbol.toStringTag, { value: "Module" }));
   const depth_buffer_range = '\n// Select a range in depths or values from a depth buffer \n// copied to output depth buffer at same ij locations where valid.\n\n// Requires "depth_buffer.wgsl".\n\nstruct parameters {\n    lower_bound: f32,\n    upper_bound: f32,\n    do_values: u32, // flag.  Do values if >0 else do depths.\n}\n\n@group(0) @binding(0) var<storage, read> inputDB : DepthBufferF32;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    if (outputLocation.valid) {\n        var current_value = outputShape.default_value;\n        var current_depth = outputShape.default_depth;\n        let inputIndices = outputLocation.ij;\n        let inputShape = inputDB.shape;\n        let inputLocation = depth_buffer_location_of(inputIndices, inputShape);\n        if (inputLocation.valid) {\n            let inputDepth = inputDB.data_and_depth[inputLocation.depth_offset];\n            let inputValue = inputDB.data_and_depth[inputLocation.data_offset];\n            var testValue = inputDepth;\n            if (parms.do_values > 0) {\n                testValue = inputValue;\n            }\n            if ((!is_default(inputValue, inputDepth, inputShape)) &&\n                (parms.lower_bound <= testValue) && \n                (testValue <= parms.upper_bound)) {\n                current_depth = inputDepth;\n                current_value = inputValue;\n            }\n        }\n        outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;\n        outputDB.data_and_depth[outputLocation.data_offset] = current_value;\n    }\n}';
-  const depth_buffer_range$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: depth_buffer_range
-  }, Symbol.toStringTag, { value: "Module" }));
   class RangeParameters extends DataObject {
     constructor(lower_bound, upper_bound, do_values) {
       super();
@@ -2455,10 +2403,6 @@
     DepthRange
   }, Symbol.toStringTag, { value: "Module" }));
   const index_colorize = "\n// suffix for pasting one panel onto another\n\nstruct parameters {\n    in_hw: vec2u,\n    out_hw: vec2u,\n    default_color: u32,\n}\n\n@group(0) @binding(0) var<storage, read> inputBuffer : array<u32>;\n\n@group(1) @binding(0) var<storage, read_write> outputBuffer : array<u32>;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // loop over output\n    let outputOffset = global_id.x;\n    let out_hw = parms.out_hw;\n    let out_location = panel_location_of(outputOffset, out_hw);\n    if (out_location.is_valid) {\n        // initial values arrive as f32\n        let color_index_f = bitcast<f32>(outputBuffer[out_location.offset]);\n        let color_index = u32(color_index_f);\n        let color_ij = vec2u(color_index, 0);\n        //let color_ij = vec2u(0, color_index);\n        let in_hw = parms.in_hw;\n        let color_location = panel_offset_of(color_ij, in_hw);\n        var value = parms.default_color;\n        value = 4294967295u - 256u * 255; // magenta\n        //value = 0;\n        if (color_location.is_valid) {\n            value = inputBuffer[color_location.offset];\n        }\n        // debug\n        //if (color_index < 1000) {\n        //    value = inputBuffer[color_index];\n        //    if (color_index > 5) {\n        //        value = 4294967295u - 256u * 255; // magenta\n        //    }\n        //    //value = 4294967295u - 256 * 256u * 255; // yellow\n        //    //value = 0;\n        //}\n        outputBuffer[out_location.offset] = value;\n    }\n}";
-  const index_colorize$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: index_colorize
-  }, Symbol.toStringTag, { value: "Module" }));
   class IndexColorParameters extends DataObject {
     constructor(in_hw, out_hw, default_color) {
       super();
@@ -2735,10 +2679,6 @@
     Max: Max$1
   }, Symbol.toStringTag, { value: "Module" }));
   const mix_color_panels = "\n// suffix for pasting one panel onto another\n\nstruct parameters {\n    ratios: vec4f,\n    in_hw: vec2u,\n    out_hw: vec2u,\n}\n\n// Input and output panels interpreted as u32 rgba\n@group(0) @binding(0) var<storage, read> inputBuffer : array<u32>;\n\n@group(1) @binding(0) var<storage, read_write> outputBuffer : array<u32>;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // loop over input\n    let inputOffset = global_id.x;\n    let in_hw = parms.in_hw;\n    let in_location = panel_location_of(inputOffset, in_hw);\n    let out_hw = parms.out_hw;\n    let out_location = panel_location_of(inputOffset, out_hw);\n    if ((in_location.is_valid) && (out_location.is_valid)) {\n        let in_u32 = inputBuffer[in_location.offset];\n        let out_u32 = outputBuffer[out_location.offset];\n        let in_color = unpack4x8unorm(in_u32);\n        let out_color = unpack4x8unorm(out_u32);\n        let ratios = parms.ratios;\n        const ones = vec4f(1.0, 1.0, 1.0, 1.0);\n        let mix_color = ((ones - ratios) * out_color) + (ratios * in_color);\n        let mix_value = f_pack_color(mix_color.xyz);\n        outputBuffer[out_location.offset] = mix_value;\n    }\n}";
-  const mix_color_panels$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: mix_color_panels
-  }, Symbol.toStringTag, { value: "Module" }));
   let MixParameters$1 = class MixParameters extends DataObject {
     constructor(in_hw, out_hw, ratios) {
       super();
@@ -2802,10 +2742,6 @@
     MixPanelsRatios
   }, Symbol.toStringTag, { value: "Module" }));
   const mix_depth_buffers = "\n// Mix two depth buffers with color values.\n// The shapes of the buffers should usually match.\n\n@group(0) @binding(0) var<storage, read> inputDB : DepthBufferF32;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> ratios: vec4f;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    if (outputLocation.valid) {\n        var currentDepth = outputDB.data_and_depth[outputLocation.depth_offset];\n        var currentData = outputDB.data_and_depth[outputLocation.data_offset];\n        let inputShape = inputDB.shape;\n        let inputLocation = depth_buffer_indices(outputOffset, inputShape);\n        if (inputLocation.valid) {\n            let inputDepth = inputDB.data_and_depth[inputLocation.depth_offset];\n            let inputData = inputDB.data_and_depth[inputLocation.data_offset];\n            if (!(is_default(inputData, inputDepth, inputShape))) {\n                //currentDepth = inputDepth;\n                currentDepth = min(currentDepth, inputDepth);\n                // DON'T always mix the colors ???\n                let in_u32 = bitcast<u32>(inputData);\n                let out_u32 = bitcast<u32>(currentData);\n                let in_color = unpack4x8unorm(in_u32);\n                let out_color = unpack4x8unorm(out_u32);\n                //let color = mix(out_color, in_color, ratios);\n                //currentData = bitcast<f32>(pack4x8unorm(mixed_color));\n                const ones = vec4f(1.0, 1.0, 1.0, 1.0);\n                let mix_color = ((ones - ratios) * out_color) + (ratios * in_color);\n                currentData = bitcast<f32>(f_pack_color(mix_color.xyz));\n            }\n        }\n        outputDB.data_and_depth[outputLocation.depth_offset] = currentDepth;\n        outputDB.data_and_depth[outputLocation.data_offset] = currentData;\n    }\n}";
-  const mix_depth_buffers$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: mix_depth_buffers
-  }, Symbol.toStringTag, { value: "Module" }));
   class MixParameters extends DataObject {
     constructor(ratios) {
       super();
@@ -2845,10 +2781,6 @@
     MixDepthBuffers
   }, Symbol.toStringTag, { value: "Module" }));
   const mix_dots_on_panel = "\nstruct parameters {\n    in_hw: vec2u,\n    n_dots: u32,\n}\n\nstruct dot {\n    ratios: vec4f,\n    pos: vec2f,\n    radius: f32,\n    color: u32,\n}\n\n@group(0) @binding(0) var<storage, read> inputDots : array<dot>;\n\n// Output panel interpreted as u32 rgba\n@group(1) @binding(0) var<storage, read_write> outputBuffer : array<u32>;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n/*\nfn debug_is_this_running(inputDot: dot) -> bool {\n    let in_hw = parms.in_hw;\n    let color = vec3f(1.0, 0.0, 1.0);\n    var u32_color = f_pack_color(color);\n    let size = in_hw.x * in_hw.y;\n    for (var i=0u; i<in_hw.x; i+=1u) {\n        for (var j=0u; j<in_hw.y; j+=1u) {\n            let offset = panel_offset_of(vec2u(i, j), in_hw);\n            if (i > u32(inputDot.pos.x)) {\n                u32_color = f_pack_color(vec3f(0.0, 1.0, 0.0));\n                outputBuffer[offset.offset] = u32_color;\n            }\n            if (j > u32(inputDot.pos.y)) {\n                u32_color = f_pack_color(vec3f(0.0, 0.0, 1.0));\n                outputBuffer[offset.offset] = u32_color;\n            }\n            //outputBuffer[offset.offset] = u32_color;\n        }\n    }\n    return true;\n}\n*/\n\n@compute @workgroup_size(256) // ??? too big?\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    // loop over input\n    let inputIndex = global_id.x;\n    let n_dots = parms.n_dots;\n    if (inputIndex >= n_dots) {\n        return;\n    }\n    let inputDot = inputDots[inputIndex];\n    //debug_is_this_running(inputDot);\n    let in_hw = parms.in_hw;\n    let inputOffset = inputDot.pos;\n    let radius = inputDot.radius;\n    let radius2 = radius * radius;\n    for (var di= - radius; di< radius; di+=1.0) {\n        for (var dj= - radius; dj< radius; dj+=1.0) {\n            if ((di*di + dj*dj <= radius2)) {\n                let location = vec2f(inputDot.pos.x + di, inputDot.pos.y + dj);\n                let offset = f_panel_offset_of(location, in_hw);\n                if (offset.is_valid) {\n                    let original_u32 = outputBuffer[offset.offset];\n                    let original_color = unpack4x8unorm(original_u32);\n                    let dot_u32 = inputDot.color;\n                    let dot_color = unpack4x8unorm(dot_u32);\n                    const ones = vec4f(1.0, 1.0, 1.0, 1.0);\n                    let ratios = inputDot.ratios;\n                    let mix_color = ((ones - ratios) * original_color) + (ratios * dot_color);\n                    let mix_value = f_pack_color(mix_color.xyz);\n                    outputBuffer[offset.offset] = mix_value;\n                }\n            }\n        }\n    }\n}\n";
-  const mix_dots_on_panel$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: mix_dots_on_panel
-  }, Symbol.toStringTag, { value: "Module" }));
   class MixDotsParameters extends DataObject {
     constructor(in_hw, n_dots) {
       super();
@@ -2958,10 +2890,6 @@
     MixDotsOnPanel
   }, Symbol.toStringTag, { value: "Module" }));
   const threshold = "\n// Project a volume where the values cross a threshold\n// Assumes prefixes: \n//  panel_buffer.wgsl\n//  volume_frame.wgsl\n//  volume_intercept.wgsl\n\nstruct parameters {\n    ijk2xyz : mat4x4f,\n    int3: Intersections3,\n    dk: f32,\n    threshold_value: f32,\n    // 2 float padding at end...???\n}\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    //let local_parms = parms;\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    // k increment length in xyz space\n    //let dk = 1.0f;  // fix this! -- k increment length in xyz space\n    let dk = parms.dk;\n    var initial_value_found = false;\n    var compare_diff: f32;\n    var threshold_crossed = false;\n    if (outputLocation.valid) {\n        var inputGeometry = inputVolume.geometry;\n        var current_value = outputShape.default_value;\n        var current_depth = outputShape.default_depth;\n        let offsetij = vec2i(outputLocation.ij);\n        let ijk2xyz = parms.ijk2xyz;\n        var threshold_value = parms.threshold_value;\n        var end_points = scan_endpoints(\n            offsetij,\n            parms.int3,\n            &inputGeometry,\n            ijk2xyz,\n        );\n        if (end_points.is_valid) {\n            let offsetij_f = vec2f(offsetij);\n            for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += dk) {\n                //let ijkw = vec4u(vec2u(outputLocation.ij), depth, 1u);\n                //let f_ijk = vec4f(ijkw);\n                //let xyz_probe = parms.ijk2xyz * f_ijk;\n                let xyz_probe = probe_point(offsetij_f, depth, ijk2xyz);\n                let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);\n                if ((input_offset.is_valid) && (!threshold_crossed)) {\n                    let valueu32 = inputVolume.content[input_offset.offset];\n                    let value = bitcast<f32>(valueu32);\n                    let diff = value - threshold_value;\n                    if ((initial_value_found) && (!threshold_crossed)) {\n                        if (compare_diff * diff <= 0.0f) {\n                            threshold_crossed = true;\n                            current_depth = f32(depth);\n                            current_value = value;\n                            break;\n                        }\n                    }\n                    initial_value_found = true;\n                    compare_diff = diff;\n                }\n            }\n        }\n        outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;\n        outputDB.data_and_depth[outputLocation.data_offset] = current_value;\n    }\n}\n";
-  const threshold$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: threshold
-  }, Symbol.toStringTag, { value: "Module" }));
   class ThresholdParameters extends DataObject {
     constructor(ijk2xyz, volume2, threshold_value) {
       super();
@@ -3007,10 +2935,6 @@
     ThresholdProject
   }, Symbol.toStringTag, { value: "Module" }));
   const normal_colors = "\n// for non-default entries of outputDB\n// put RGBA entries where RGB are scaled 255 representations of\n// approximate normals (direction of greatest increase) at the\n// corresponding location in the inputVolume\n\n// Assumes prefixes: \n//  panel_buffer.wgsl\n//  volume_frame.wgsl\n\nstruct parameters {\n    ijk2xyz : mat4x4f,\n    default_value: u32,\n}\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    if (outputLocation.valid) {\n        var inputGeometry = inputVolume.geometry;\n        var output_value = parms.default_value;\n        var offset_sum = vec3f(0.0f, 0.0f, 0.0f);\n        let depth = outputDB.data_and_depth[outputLocation.depth_offset];\n        let ij = outputLocation.ij;\n        let f_ijk = vec4f(f32(ij[0]), f32(ij[1]), depth, 1.0f);\n        let xyz_probe = parms.ijk2xyz * f_ijk;\n        let xyz = xyz_probe.xyz;\n        let input_offset = offset_of_xyz(xyz, &inputGeometry);\n        var offsets_are_valid = input_offset.is_valid;\n        const combinations = array(\n            vec3u(0,1,2),\n            vec3u(1,2,0),\n            vec3u(2,0,1),\n        );\n        if (offsets_are_valid) {\n            for (var q=0; q<3; q++) {\n                let combo = combinations[q];\n                let M = combo[0];\n                let N = combo[1];\n                let P = combo[2];\n                for (var m_shift=-1; m_shift<=1; m_shift++) {\n                    for (var n_shift=-1; n_shift<=1; n_shift++) {\n                        let vector_center_offset = input_offset.offset;\n                        let vector_center_indices = index_of(vector_center_offset, &inputGeometry);\n                        var left_indices = vector_center_indices.ijk;\n                        var right_indices = vector_center_indices.ijk;\n                        left_indices[P] += 1u;\n                        if (right_indices[P] == 0) {\n                            offsets_are_valid = false;\n                        } else {\n                            right_indices[P] = u32(i32(right_indices[P]) - 1);\n                            let left_offset = offset_of(left_indices, &inputGeometry);\n                            let right_offset = offset_of(right_indices, &inputGeometry);\n                            offsets_are_valid = offsets_are_valid && left_offset.is_valid && right_offset.is_valid;\n                            if (offsets_are_valid) {\n                                let left_point = to_model(left_indices, &inputGeometry);\n                                let right_point = to_model(right_indices, &inputGeometry);\n                                let left_value_u32 = inputVolume.content[left_offset.offset];\n                                let right_value_u32 = inputVolume.content[right_offset.offset];\n                                let weight = bitcast<f32>(left_value_u32) - bitcast<f32>(right_value_u32);\n                                let vector = (left_point - right_point);\n                                offset_sum += weight * vector;\n                            }\n                        } // don't break: set of measure 0\n                    }\n                }\n            }\n        }\n        if (offsets_are_valid) {\n            let L = length(offset_sum);\n            // default to white for 0 normal\n            output_value = 4294967295u;\n            if (L > 1e-10) {\n                let N = normalize(offset_sum);\n                // xxx should clamp?\n                let colors = vec3u((N + 1.0) * 127.5);\n                //let colors = vec3u(255, 0, 0);  // debug\n                //let result = pack4xU8(color); ???error: unresolved call target 'pack4xU8'\n                output_value = \n                    colors[0] + \n                    256 * (colors[1] + 256 * (colors[2] + 256 * 255));\n            }\n        } else {\n            //output_value = 255 * 256; // debug\n        }\n        //...\n        outputDB.data_and_depth[outputLocation.data_offset] = bitcast<f32>(output_value);\n    }\n}";
-  const normal_colors$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: normal_colors
-  }, Symbol.toStringTag, { value: "Module" }));
   class NormalParameters extends DataObject {
     constructor(ijk2xyz, default_value) {
       super();
@@ -3048,10 +2972,6 @@
     NormalColorize
   }, Symbol.toStringTag, { value: "Module" }));
   const soften_volume = "\n// quick and dirty volume low pass filter\n\n// Assumes prefixes: \n//  panel_buffer.wgsl\n//  volume_frame.wgsl\n\n// weights per offset rectangular distance from voxel\nstruct parameters {\n    offset_weights: vec4f,\n}\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputVolume : Volume;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    let columnOffset = global_id.x;\n    var inputGeometry = inputVolume.geometry;\n    var outputGeometry = outputVolume.geometry;\n    let width = outputGeometry.shape.xyz.z;\n    let startOffset = columnOffset * width;\n    for (var column=0u; column<width; column = column + 1u) {\n        let outputOffset = startOffset + column;\n        //process_voxel(outputOffset, inputGeometry, outputGeometry); -- xxx refactor inlined\n        let output_index = index_of(outputOffset, &outputGeometry);\n        if (output_index.is_valid) {\n            let input_index = index_of(outputOffset, &inputGeometry);\n            if (input_index.is_valid) {\n                // by default just copy along borders\n                let center = vec3i(output_index.ijk);\n                let offset_weights = parms.offset_weights;\n                var result_value = inputVolume.content[outputOffset];\n                var offsets_valid = all(input_index.ijk > vec3u(0u,0u,0u));\n                var accumulator = 0.0f;\n                for (var di=-1; di<=1; di++) {\n                    for (var dj=-1; dj<=1; dj++) {\n                        for (var dk=-1; dk<=1; dk++) {\n                            let shift = vec3i(di, dj, dk);\n                            let probe = vec3u(shift + center);\n                            let probe_offset = offset_of(probe, &inputGeometry);\n                            offsets_valid = offsets_valid && probe_offset.is_valid;\n                            if (offsets_valid) {\n                                let abs_offset = u32(abs(di) + abs(dj) + abs(dk));\n                                let weight = offset_weights[abs_offset];\n                                let probe_value = bitcast<f32>(inputVolume.content[probe_offset.offset]);\n                                accumulator += (weight * probe_value);\n                            }\n                        }\n                    }\n                }\n                if (offsets_valid) {\n                    result_value = bitcast<u32>(accumulator);\n                }\n                outputVolume.content[outputOffset] = result_value;\n            }\n        }\n    }\n}";
-  const soften_volume$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: soften_volume
-  }, Symbol.toStringTag, { value: "Module" }));
   const default_weights = new Float32Array([0.43855053, 0.03654588, 0.0151378, 0.02006508]);
   class SoftenParameters extends DataObject {
     constructor(offset_weights) {
@@ -3171,10 +3091,6 @@
     Mix
   }, Symbol.toStringTag, { value: "Module" }));
   const volume_at_depth = "\n\n// Generate values for volume in projection at a given depth as a depth buffer.\n// Assumes prefixes: \n//  depth_buffer.wgsl\n//  volume_frame.wgsl\n//  volume_intercept.wgsl\n\nstruct parameters {\n    ijk2xyz : mat4x4f, // depth buffer to xyz affine transform matrix.\n    depth: f32,  // depth to probe\n    // 3 floats padding at end...???\n}\n\n@group(0) @binding(0) var<storage, read> inputVolume : Volume;\n\n@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;\n\n@group(2) @binding(0) var<storage, read> parms: parameters;\n\n@compute @workgroup_size(256)\nfn main(@builtin(global_invocation_id) global_id : vec3u) {\n    let outputOffset = global_id.x;\n    let outputShape = outputDB.shape;\n    let outputLocation = depth_buffer_indices(outputOffset, outputShape);\n    if (outputLocation.valid) {\n        // xxx refactor with max_value_project somehow?\n        var inputGeometry = inputVolume.geometry;\n        var current_value = outputShape.default_value;\n        var current_depth = outputShape.default_depth;\n        let offsetij_f = vec2f(outputLocation.ij);\n        let ijk2xyz = parms.ijk2xyz;\n        let depth = parms.depth;\n        let xyz_probe = probe_point(offsetij_f, depth, ijk2xyz);\n        let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);\n        if (input_offset.is_valid) {\n            let valueu32 = inputVolume.content[input_offset.offset];\n            let value = bitcast<f32>(valueu32);\n            current_depth = f32(depth);\n            current_value = value;\n        }\n        outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;\n        outputDB.data_and_depth[outputLocation.data_offset] = current_value;\n    }\n}\n";
-  const volume_at_depth$1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    default: volume_at_depth
-  }, Symbol.toStringTag, { value: "Module" }));
   class DepthParameters extends DataObject {
     constructor(ijk2xyz, depth) {
       super();
@@ -4429,7 +4345,7 @@
   exports2.MixView = MixView;
   exports2.NormalAction = NormalAction;
   exports2.PaintPanel = PaintPanel$1;
-  exports2.Painter_wgsl = Painter;
+  exports2.Painter_wgsl = painter_code;
   exports2.PastePanel = PastePanel$1;
   exports2.Projection = Projection;
   exports2.SampleVolume = SampleVolume$1;
@@ -4444,17 +4360,17 @@
   exports2.ViewVolume = ViewVolume;
   exports2.VolumeAtDepth = VolumeAtDepth$1;
   exports2.canvas_orbit = canvas_orbit;
-  exports2.combine_depth_buffers_wgsl = combine_depth_buffers$1;
+  exports2.combine_depth_buffers_wgsl = combine_depth_buffers;
   exports2.combine_depths = combine_depths;
   exports2.combine_test = combine_test;
   exports2.context = context;
-  exports2.convert_buffer_wgsl = convert_buffer$1;
-  exports2.convert_depth_buffer_wgsl = convert_depth_buffer$1;
-  exports2.convert_gray_prefix_wgsl = convert_gray_prefix$1;
+  exports2.convert_buffer_wgsl = convert_buffer;
+  exports2.convert_depth_buffer_wgsl = convert_depth_buffer;
+  exports2.convert_gray_prefix_wgsl = convert_gray_prefix;
   exports2.coordinates = coordinates;
   exports2.depth_buffer = depth_buffer;
-  exports2.depth_buffer_range_wgsl = depth_buffer_range$1;
-  exports2.depth_buffer_wgsl = depth_buffer$2;
+  exports2.depth_buffer_range_wgsl = depth_buffer_range;
+  exports2.depth_buffer_wgsl = depth_buffer$1;
   exports2.depth_range_view = depth_range_view;
   exports2.do_combine = do_combine;
   exports2.do_gray = do_gray;
@@ -4464,35 +4380,35 @@
   exports2.do_paste = do_paste;
   exports2.do_pipeline = do_pipeline;
   exports2.do_sample = do_sample;
-  exports2.embed_volume_wgsl = embed_volume$1;
+  exports2.embed_volume_wgsl = embed_volume;
   exports2.gray_test = gray_test;
-  exports2.index_colorize_wgsl = index_colorize$1;
+  exports2.index_colorize_wgsl = index_colorize;
   exports2.max_projection_test = max_projection_test;
-  exports2.max_value_project_wgsl = max_value_project$1;
-  exports2.mix_color_panels_wgsl = mix_color_panels$1;
-  exports2.mix_depth_buffers_wgsl = mix_depth_buffers$1;
-  exports2.mix_dots_on_panel_wgsl = mix_dots_on_panel$1;
+  exports2.max_value_project_wgsl = max_value_project;
+  exports2.mix_color_panels_wgsl = mix_color_panels;
+  exports2.mix_depth_buffers_wgsl = mix_depth_buffers;
+  exports2.mix_dots_on_panel_wgsl = mix_dots_on_panel;
   exports2.mix_test = mix_test;
   exports2.mousepaste = mousepaste;
   exports2.name = name;
-  exports2.normal_colors_wgsl = normal_colors$1;
+  exports2.normal_colors_wgsl = normal_colors;
   exports2.paint_panel = paint_panel;
   exports2.paint_test = paint_test;
   exports2.painter = painter;
   exports2.panel = panel;
-  exports2.panel_buffer_wgsl = panel_buffer$1;
-  exports2.paste_panel_wgsl = paste_panel$1;
+  exports2.panel_buffer_wgsl = panel_buffer;
+  exports2.paste_panel_wgsl = paste_panel;
   exports2.paste_test = paste_test;
   exports2.pipeline_test = pipeline_test;
   exports2.sample_test = sample_test;
   exports2.sample_volume = sample_volume;
-  exports2.soften_volume_wgsl = soften_volume$1;
+  exports2.soften_volume_wgsl = soften_volume;
   exports2.threshold_test = threshold_test;
-  exports2.threshold_wgsl = threshold$1;
+  exports2.threshold_wgsl = threshold;
   exports2.vol_depth_view = vol_depth_view;
   exports2.volume = volume;
-  exports2.volume_at_depth_wgsl = volume_at_depth$1;
-  exports2.volume_frame_wgsl = volume_frame$1;
-  exports2.volume_intercepts_wgsl = volume_intercepts$1;
+  exports2.volume_at_depth_wgsl = volume_at_depth;
+  exports2.volume_frame_wgsl = volume_frame;
+  exports2.volume_intercepts_wgsl = volume_intercepts;
   Object.defineProperty(exports2, Symbol.toStringTag, { value: "Module" });
 });
