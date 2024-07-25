@@ -20,3 +20,8 @@ npm run dev
 rm -r package-lock.json node_modules
 npm install
 ```
+
+## Notes:
+
+The project structure is loosely based on the vite/library strategy outlined here:
+https://andrewwalpole.com/blog/use-vite-for-javascript-libraries/
