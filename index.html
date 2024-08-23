@@ -32,15 +32,16 @@
 
 <script type="module">
     // basic import test
-    import {
-        name,
-        GPUContext,
-        Painter_wgsl
-    } from "./lib/main.js";
-    console.log("name", name);
-    console.log("GPUContext", GPUContext);
-    console.log("Painter_wgsl", Painter_wgsl);
+    import * as main from "./lib/main.js";
+    console.log("name", main.name);
+    console.log("GPUContext", main.GPUContext);
+    console.log("Painter_wgsl", main.Painter_wgsl);
+
+    // make main global for testing
+    window.main = main;
 </script>
+
+<div id="app">Hello, World!</div>
 
 <h1>Example HTML pages.</h1>
 
