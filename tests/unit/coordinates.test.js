@@ -63,7 +63,8 @@ describe('coordinates', () => {
         const ijk2 = Pr.offset2ijk(offset);
         expect(ijk2).toEqual(ijk);
         const xyz2 = Pr.offset2xyz(offset);
-        const out_of_bounds = Pr.xyz2offset([100, 100, 100]);
+        expect(xyz2).toEqual(xyz);
+        const out_of_bounds = Pr.xyz2offset([100, 100, 101]);
         expect(out_of_bounds).toBeNull();
     });
 });
