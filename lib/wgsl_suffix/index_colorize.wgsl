@@ -28,7 +28,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         let in_hw = parms.in_hw;
         let color_location = panel_offset_of(color_ij, in_hw);
         var value = parms.default_color;
-        value = 4294967295u - 256u * 255; // magenta
+        //value = 4294967295u - 256u * 255; // magenta
         //value = 0;
         if (color_location.is_valid) {
             value = inputBuffer[color_location.offset];
