@@ -54,7 +54,7 @@ fn scan_endpoints(
         let mid_offset = offset_of_xyz(mid_probe, geom_ptr);
         result.is_valid = mid_offset.is_valid;
         // DEBUGGING
-        result.is_valid = true;
+        //result.is_valid = true;
     }
     return result;
 }
