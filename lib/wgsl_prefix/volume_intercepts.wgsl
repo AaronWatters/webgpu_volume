@@ -65,6 +65,42 @@ fn probe_point(offset: vec2f, depth: f32, ijk2xyz: mat4x4f) -> vec3f {
     return xyzw.xyz;
 }
 
+
+// Data for probing a volume along a line segment in the depth direction.
+struct probeInterpolation {
+    start_probe: vec3f,
+    voxel_offset: vec3f,
+    voxel_count: u32,
+}
+
+fn probe_stats(offset: vec2f, start_depth: f32, end_depth: f32, ijk2xyz: mat4x4f) 
+    -> probeInterpolation {
+    var result: probeInterpolation;
+    let start_xyz = probe_point(offset, start_depth, ijk2xyz);
+    result.start_probe = start_xyz;
+    let end_xyz = probe_point(offset, end_depth, ijk2xyz);
+    let vector = end_xyz - start_xyz;
+    let max_component = max(max(abs(vector[0]), abs(vector[1])), abs(vector[2]));
+    result.voxel_offset = vector / max_component;
+    result.voxel_count = u32(max_component);
+    return result;
+}
+
+// Locate a voxel probe along a line segment in the depth direction as xyz
+fn voxel_probe(iteration: u32, stats: probeInterpolation) -> vec3f {
+    return stats.start_probe + f32(iteration) * stats.voxel_offset;
+}
+
+// Locate a voxel probe along a line segment in the depth direction as volume index offset.
+fn voxel_probe_offset(
+    iteration: u32, 
+    stats: probeInterpolation, 
+    geom : ptr<function, VolumeGeometry>) -> IndexOffset {
+    let probe = voxel_probe(iteration, stats);
+    //return offset_of_f(probe, geom);
+    return offset_of_xyz(probe, geom);
+}
+
 fn intercepts2(offset: vec2i, intc: Intersection2) -> Endpoints2 {
     var result: Endpoints2;
     let x = (intc.c0 * f32(offset[0])) + (intc.c1 * f32(offset[1]));
