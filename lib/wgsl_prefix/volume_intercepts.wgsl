@@ -71,6 +71,7 @@ struct probeInterpolation {
     start_probe: vec3f,
     voxel_offset: vec3f,
     voxel_count: u32,
+    depth_offset: f32,
 }
 
 fn probe_stats(offset: vec2f, start_depth: f32, end_depth: f32, ijk2xyz: mat4x4f) 
@@ -83,6 +84,7 @@ fn probe_stats(offset: vec2f, start_depth: f32, end_depth: f32, ijk2xyz: mat4x4f
     let max_component = max(max(abs(vector[0]), abs(vector[1])), abs(vector[2]));
     result.voxel_offset = vector / max_component;
     result.voxel_count = u32(max_component);
+    result.depth_offset = (end_depth - start_depth) / max_component;
     return result;
 }
 

@@ -8,7 +8,7 @@
 struct parameters {
     ijk2xyz : mat4x4f,
     int3: Intersections3,
-    dk: f32,  // k increment for probe
+    dk: f32,  // k increment for probe  ??? historical????
     // 3 floats padding at end...???
 }
 
