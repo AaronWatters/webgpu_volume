@@ -47,6 +47,7 @@
 
 <p id="info">Information here.</p>
 
+<button id="swap-button">Swap</button>
 
 <div class="slider-container">
     <input type="range" min="0" max="360" id="depth-slider" class="slider">
@@ -122,6 +123,7 @@
     const shadingInfo = document.getElementById('shading-info');
     const intensityInfo = document.getElementById('intensity-info');
     const maxInfo = document.getElementById('max-info');
+    const swapButton = document.getElementById('swap-button');
 
     function info(msg) {
         info_para.textContent = msg;
@@ -129,7 +131,22 @@
 
     const i24path = "../sample_data/i24.bin";
     const l24path = "../sample_data/l24.bin";
+    const i25path = "../sample_data/i25.bin";
+    const l25path = "../sample_data/l25.bin";
+    var timestamp = 24;
     var l24cpu, i24cpu, l24gpu, i24gpu, context, view;
+    var i25cpu, l25cpu;
+
+    swapButton.onclick = async function() {
+        if (timestamp == 24) {
+            timestamp = 25;
+            await view.change_volumes(l25cpu, i25cpu);
+        } else {
+            timestamp = 24;
+            await view.change_volumes(l24cpu, i24cpu);
+        }
+        swapButton.textContent = "Swap " + timestamp;
+    };
 
     async function go() {
         context = new GPUContext.Context();
@@ -137,11 +154,15 @@
         const kind = Float32Array;
         l24cpu = await CPUVolume.fetch_volume_prefixed(l24path, kind);
         i24cpu = await CPUVolume.fetch_volume_prefixed(i24path, kind);
-        info('got cpu volumes');
+        l25cpu = await CPUVolume.fetch_volume_prefixed(l25path, kind);
+        i25cpu = await CPUVolume.fetch_volume_prefixed(i25path, kind);
+        info('got cpu volumes for timestamps 24 and 25');
         const [dK, dJ, dI] = [1,1,1];
         await context.connect();
         l24gpu = l24cpu.gpu_volume(context, dK, dJ, dI);
         i24gpu = i24cpu.gpu_volume(context, dK, dJ, dI);
+        //l24gpu = l25cpu.gpu_volume(context, dK, dJ, dI);
+        //i24gpu = i25cpu.gpu_volume(context, dK, dJ, dI);
         info('got gpu volumes');
         const colors = new Uint32Array(random_colors);
         view = new SegmentationQuad.SegmentationQuad(l24gpu, i24gpu, colors, range_callback);
