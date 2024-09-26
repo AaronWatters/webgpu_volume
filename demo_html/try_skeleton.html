@@ -75,17 +75,22 @@
     import * as GPUContext from "../lib/support/GPUContext.js";
 
     function rndint() {
-        return Math.floor(Math.random() * 256);
+        let x = Math.floor(Math.random() * 256);
+        return Math.max(1, x);
     };
     function rnd_color() {
         //return 0xffffffff;
+        var rgb = [rndint(), rndint(), rndint()];
+        //debugger;
+        var M = Math.max(...rgb);
+        rgb = rgb.map(x => Math.floor(255 * x / M));
+        let [r, g, b] = rgb;
         return (
-            rndint() + 256 * (
-                rndint() + 256 * (
-                    rndint() + 256 * 255
+            r + 256 * (
+                b + 256 * (
+                    g + 256 * 255
                 )
-            )
-        );
+            ));
     }
     const random_colors = [0];  // index 0 is invisible
     for (let i=0; i<100; i++) {
