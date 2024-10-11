@@ -53,9 +53,13 @@
                         <span id="threshold-value">0</span>
                     </div>
                 </div>
-                
             </div>
-            <div class="image"><canvas id="max-canvas" width="500" height="500"></canvas></div>
+            <div class="image">
+                <canvas id="max-canvas" width="500" height="500"></canvas>
+                <label>
+                    <input type="checkbox" id="colorizeCheckbox"> Colorize
+                </label>  
+            </div>
             <div class="image">
                 <canvas id="slice-canvas" width="500" height="500"></canvas>
                 <div class="slider-container">
@@ -64,7 +68,7 @@
                         <span>depth: &nbsp;</span>
                         <span id="depth-value">0</span>
                     </div>
-                </div>
+                </div>          
             </div>
         </div>
     </div>
@@ -113,6 +117,7 @@
         const sliceText = document.getElementById('slice-text');
         const maxText = document.getElementById('max-text');
         const thresholdText = document.getElementById('threshold-text');
+        const colorizeCheckbox = document.getElementById('colorizeCheckbox');
 
         var context, view, cpu_volume, volume;
 
@@ -193,6 +198,12 @@
             //view.run();
         };
         depthSlider.addEventListener('input', depthSlide);
+
+        async function colorizeCheckboxChange() {
+            await view.set_colorize(colorizeCheckbox.checked);
+            //view.run();
+        };
+        colorizeCheckbox.addEventListener('change', colorizeCheckboxChange);
 
         async function thresholdSlide() {
             //await pipeline.volume_future;
