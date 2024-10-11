@@ -51,8 +51,8 @@ class x {
       usage: s
     });
     if (t) {
-      const _ = a.getMappedRange(), c = t.constructor;
-      new c(_).set(t);
+      const _ = a.getMappedRange(), l = t.constructor;
+      new l(_).set(t);
     } else
       this.load_buffer(a);
     a.unmap();
@@ -221,8 +221,8 @@ function m(i, t) {
     throw new Error("incompatible matrices.");
   for (var a = X(e, s), r = 0; r < e; r++)
     for (var u = 0; u < s; u++) {
-      for (var _ = 0, c = 0; c < o; c++)
-        _ += i[r][c] * t[c][u];
+      for (var _ = 0, l = 0; l < o; l++)
+        _ += i[r][l] * t[l][u];
       a[r][u] = _;
     }
   return a;
@@ -269,7 +269,7 @@ function Rt(i, t, e, n, o) {
       r[u][_] = i[u + t][_ + e];
   return r;
 }
-function Nt(i) {
+function Wt(i) {
   var t = vt(i);
   const [e, n] = B(i), o = Math.min(e, n);
   for (var s = 0; s < o; s++) {
@@ -278,12 +278,12 @@ function Nt(i) {
       h > r && (r = h, a = u);
     }
     a != u && (t = Ft(t, s, a, !0));
-    for (var _ = t[s][s], c = 1 / _, l = O(c, t[s]), u = 0; u < o; u++) {
+    for (var _ = t[s][s], l = 1 / _, c = O(l, t[s]), u = 0; u < o; u++) {
       const p = t[u];
       if (u == s)
-        t[u] = l;
+        t[u] = c;
       else {
-        const f = p[s], d = O(-f, l), y = st(p, d);
+        const f = p[s], d = O(-f, c), y = st(p, d);
         t[u] = y;
       }
     }
@@ -291,10 +291,10 @@ function Nt(i) {
   return t;
 }
 function U(i) {
-  const t = i.length, e = k(t), n = Ct(i, e), o = Nt(n);
+  const t = i.length, e = k(t), n = Ct(i, e), o = Wt(n);
   return Rt(o, 0, t, t, 2 * t);
 }
-function Wt(i) {
+function Nt(i) {
   var t = Math.cos(i), e = Math.sin(i), n = [
     [t, -e, 0],
     [e, t, 0],
@@ -366,8 +366,8 @@ const ke = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   M_copy: vt,
   M_inverse: U,
   M_pitch: Bt,
-  M_reduce: Nt,
-  M_roll: Wt,
+  M_reduce: Wt,
+  M_roll: Nt,
   M_row_major_order: je,
   M_shape: B,
   M_slice: Rt,
@@ -509,14 +509,14 @@ let it = class Xt extends x {
     var n = t;
     e && (n = U(t));
     const o = m(n, this.matrix), [s, a, r, u] = this.shape;
-    var _ = null, c = null;
-    for (var l of [0, s])
+    var _ = null, l = null;
+    for (var c of [0, s])
       for (var h of [0, a])
         for (var p of [0, r]) {
-          const d = q(o, [l, h, p, 1]);
-          _ = _ ? qt(_, d) : d, c = c ? Tt(c, d) : d;
+          const d = q(o, [c, h, p, 1]);
+          _ = _ ? qt(_, d) : d, l = l ? Tt(l, d) : d;
         }
-    return { min: c, max: _ };
+    return { min: l, max: _ };
   }
   set_shape(t, e) {
     const [n, o, s] = t;
@@ -765,7 +765,7 @@ class Zt extends V {
       e.add_pass(t);
   }
 }
-const Nn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Wn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   Action: V,
   ActionSequence: Zt,
@@ -825,7 +825,7 @@ class St extends V {
     return await this.targetVolume.pull_data();
   }
 }
-const Wn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Nn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   SampleVolume: St
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1041,7 +1041,7 @@ class M extends V {
     this.context = t;
     const e = t.device, n = this.source, o = this.target, s = this.parameters;
     n.attach_to_context(t), o.attach_to_context(t), s.attach_to_context(t);
-    const a = this.get_shader_module(t), r = o.bindGroupLayout("storage"), u = n.bindGroupLayout("read-only-storage"), _ = s.bindGroupLayout("read-only-storage"), c = e.createPipelineLayout({
+    const a = this.get_shader_module(t), r = o.bindGroupLayout("storage"), u = n.bindGroupLayout("read-only-storage"), _ = s.bindGroupLayout("read-only-storage"), l = e.createPipelineLayout({
       bindGroupLayouts: [
         u,
         r,
@@ -1049,7 +1049,7 @@ class M extends V {
       ]
     });
     this.pipeline = e.createComputePipeline({
-      layout: c,
+      layout: l,
       compute: {
         module: a,
         entryPoint: "main"
@@ -1079,8 +1079,8 @@ function Pt(i, t) {
       _ = [0, 0, 1111, -1111];
     else {
       const $ = s[u], G = -v[0] / g, _t = -v[1] / g;
-      var c = (0 - v[3]) / g, l = ($ - v[3]) / g;
-      c > l && ([c, l] = [l, c]), _ = [G, _t, c, l];
+      var l = (0 - v[3]) / g, c = ($ - v[3]) / g;
+      l > c && ([l, c] = [c, l]), _ = [G, _t, l, c];
     }
     e.set(_, r), r += 4;
   }
@@ -1443,11 +1443,11 @@ class F extends x {
     if (r == this.default_value && u == this.default_depth)
       return null;
     if (s.data = r, s.depth = u, n) {
-      const _ = [t, e, u], c = n.ijk2xyz_v(_);
-      if (s.xyz = c, o) {
-        const l = o.space.xyz2ijk_v(c), h = l.map((f) => Math.floor(f));
+      const _ = [t, e, u], l = n.ijk2xyz_v(_);
+      if (s.xyz = l, o) {
+        const c = o.space.xyz2ijk_v(l), h = c.map((f) => Math.floor(f));
         s.volume_ijk = h;
-        const p = o.space.ijk2offset(l);
+        const p = o.space.ijk2offset(c);
         s.volume_offset = p, p != null && (s.volume_data = o.data[p]);
       }
     }
@@ -1467,6 +1467,7 @@ struct parameters {
     length: u32,
     min_value: f32,
     max_value: f32,
+    qd_colorize: u32,  // quick and dirty colorize, 0 for gray
 }
 
 fn new_out_value(in_value: u32, out_value: u32, parms: parameters) -> u32 {
@@ -1478,7 +1479,66 @@ fn new_out_value(in_value: u32, out_value: u32, parms: parameters) -> u32 {
     let gray_level = u32(intensity * 255.0);
     //let color = vec4u(gray_level, gray_level, gray_level, 255u);
     //let result = pack4xU8(color); ???error: unresolved call target 'pack4xU8'
-    let result = gray_level + 256 * (gray_level + 256 * (gray_level + 256 * 255));
+    var result: u32;
+    if (parms.qd_colorize == 0) {
+        result = gray_level + 256 * (gray_level + 256 * (gray_level + 256 * 255));
+    } else {
+        //let inv = 255 - gray_level;
+        // yellow to blue
+        //result = gray_level + 256 * (gray_level + 256 * (inv + 256 * 255));
+        var red: u32;
+        var green: u32;
+        var blue: u32;
+        
+        // black green cyan magenta white
+        if (gray_level < 64) {
+            // black to green
+            red = 0;
+            green = gray_level * 4;
+            blue = 0;
+        } else if (gray_level < 128) {
+            // green to cyan
+            red = 0;
+            green = 255;
+            blue = 255 - (gray_level - 64) * 4;
+        } else if (gray_level < 192) {
+            // cyan to magenta
+            red = (gray_level - 128) * 4;
+            green = 255 - red;
+            blue = 255;
+        } else {
+            // magenta to white
+            green = (gray_level - 192) * 4;
+            red = 255;
+            blue = 255;
+        }
+        /*
+        // Black -> B -> G -> Y -> W
+        if (gray_level < 64) {
+            // black to blue
+            red = 0;
+            green = 0;
+            blue = gray_level * 4;
+        } else if (gray_level < 128) {
+            // blue to green
+            green = (gray_level - 64) * 4;
+            blue = 256 - green;
+            red = 0;
+        } else if (gray_level < 192) {
+            // green to yellow
+            red = (gray_level - 128) * 4;
+            green = 255;
+            blue = 0;
+        } else {
+            // yellow to white
+            blue = (gray_level - 192) * 4;
+            red = 255;
+            green = 255;;
+        }
+        */
+        result = red + 256 * (green + 256 * (blue + 256 * 255));
+    }
+    //let result = gray_level + 256 * (gray_level + 256 * (gray_level + 256 * 255));
     //let result = 255u + 256 * (gray_level + 256 * (gray_level + 256 * gray_level));
     return result;
 }`, Ee = `
@@ -1560,20 +1620,20 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     }
 }`;
 class oe extends x {
-  constructor(t, e, n, o, s) {
-    super(), this.input_start = t, this.output_start = e, this.length = n, this.min_value = o, this.max_value = s, this.buffer_size = 5 * Int32Array.BYTES_PER_ELEMENT;
+  constructor(t, e, n, o, s, a) {
+    super(), this.input_start = t, this.output_start = e, this.length = n, this.min_value = o, this.max_value = s, a = a || 0, this.qd_colorize = a, this.buffer_size = 6 * Int32Array.BYTES_PER_ELEMENT;
   }
   load_buffer(t) {
     t = t || this.gpu_buffer;
     const e = t.getMappedRange(), n = new Uint32Array(e);
     n[0] = this.input_start, n[1] = this.output_start, n[2] = this.length;
     const o = new Float32Array(e);
-    o[3] = this.min_value, o[4] = this.max_value;
+    o[3] = this.min_value, o[4] = this.max_value, n[5] = this.qd_colorize;
   }
 }
 class se extends M {
-  constructor(t, e, n, o, s, a, r) {
-    super(), this.from_start = n, this.to_start = o, this.length = s, this.min_value = a, this.max_value = r, this.source = t, this.target = e;
+  constructor(t, e, n, o, s, a, r, u) {
+    super(), this.from_start = n, this.to_start = o, this.length = s, this.min_value = a, this.max_value = r, this.qd_colorize = u || 0, this.source = t, this.target = e;
   }
   attach_to_context(t) {
     this.parameters = new oe(
@@ -1581,7 +1641,8 @@ class se extends M {
       this.to_start,
       this.length,
       this.min_value,
-      this.max_value
+      this.max_value,
+      this.qd_colorize
     ), super.attach_to_context(t);
   }
   get_shader_module(t) {
@@ -1591,13 +1652,16 @@ class se extends M {
   getWorkgroupCounts() {
     return [Math.ceil(this.length / 256), 1, 1];
   }
+  async change_colorize(t) {
+    this.qd_colorize = t, this.parameters.qd_colorize = t, await this.parameters.push_buffer();
+  }
 }
 class Et extends se {
-  constructor(t, e, n, o) {
-    const s = t.size;
-    if (s != e.size)
-      throw new Error("panel sizes must match: " + [s, e.size]);
-    super(t, e, 0, 0, s, n, o);
+  constructor(t, e, n, o, s) {
+    const a = t.size;
+    if (a != e.size)
+      throw new Error("panel sizes must match: " + [a, e.size]);
+    super(t, e, 0, 0, a, n, o, s);
   }
   compute_extrema() {
     const t = this.source.buffer_content;
@@ -1726,15 +1790,16 @@ class w {
     const n = new at(t, e);
     return n.attach_to_context(this), n;
   }
-  to_gray_panel(t, e, n, o) {
+  to_gray_panel(t, e, n, o, s) {
     this.must_be_connected();
-    const s = new Et(
+    const a = new Et(
       t,
       e,
       n,
-      o
+      o,
+      s
     );
-    return s.attach_to_context(this), s;
+    return a.attach_to_context(this), a;
   }
   max_projection(t, e, n) {
     this.must_be_connected();
@@ -1815,16 +1880,16 @@ function Ce() {
 function Re(i) {
   [T, dt] = [dt, T], K.push_buffer(T), A.reset(K), A.run();
 }
-function Ne(i) {
+function We(i) {
   [T, dt] = [dt, T], A.change_image(T);
 }
 const no = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  change_paint: Ne,
+  change_paint: We,
   change_paint1: Re,
   do_paint: Ue,
   do_paint1: Ie
-}, Symbol.toStringTag, { value: "Module" })), We = `
+}, Symbol.toStringTag, { value: "Module" })), Ne = `
 // Suffix pasting input depth buffer over output where depth dominates
 // Requires "depth_buffer.wgsl"
 
@@ -1884,7 +1949,7 @@ class ue extends V {
   attach_to_context(t) {
     const e = t.device, n = this.inputDB, o = this.outputDB, s = this.parameters;
     s.attach_to_context(t);
-    const a = Ht(We, t), r = o.bindGroupLayout("storage"), u = n.bindGroupLayout("read-only-storage"), _ = s.bindGroupLayout("read-only-storage"), c = e.createPipelineLayout({
+    const a = Ht(Ne, t), r = o.bindGroupLayout("storage"), u = n.bindGroupLayout("read-only-storage"), _ = s.bindGroupLayout("read-only-storage"), l = e.createPipelineLayout({
       bindGroupLayouts: [
         u,
         r,
@@ -1892,7 +1957,7 @@ class ue extends V {
       ]
     });
     this.pipeline = e.createComputePipeline({
-      layout: c,
+      layout: l,
       compute: {
         module: a,
         entryPoint: "main"
@@ -1975,13 +2040,13 @@ async function Ke() {
     Float32Array
   );
   u.attach_to_context(i), _.attach_to_context(i);
-  const c = new ue(
+  const l = new ue(
     _,
     u
   );
-  c.attach_to_context(i), c.run();
-  const l = await _.pull_data();
-  console.log("got result", l), console.log("outputDB", _);
+  l.attach_to_context(i), l.run();
+  const c = await _.pull_data();
+  console.log("got result", c), console.log("outputDB", _);
 }
 const so = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
@@ -2163,17 +2228,17 @@ async function en(i) {
   o.attach_to_context(t), s.attach_to_context(t), a.attach_to_context(t);
   const r = new Uint8Array(e * e), u = e / 2;
   for (var _ = 0; _ < e; _++)
-    for (var c = 0; c < e; c++) {
-      const G = _ * e + c;
-      r[G] = (Math.abs(u - _) + Math.abs(u - c)) * 10 % 255;
+    for (var l = 0; l < e; l++) {
+      const G = _ * e + l;
+      r[G] = (Math.abs(u - _) + Math.abs(u - l)) * 10 % 255;
     }
-  const l = nt(r);
-  await o.push_buffer(l);
+  const c = nt(r);
+  await o.push_buffer(c);
   const h = new Uint8Array(n * n), p = n / 2;
   for (var _ = 0; _ < n; _++)
-    for (var c = 0; c < n; c++) {
-      const L = _ * n + c;
-      h[L] = (255 - 2 * (Math.abs(p - _) + Math.abs(p - c))) % 255;
+    for (var l = 0; l < n; l++) {
+      const L = _ * n + l;
+      h[L] = (255 - 2 * (Math.abs(p - _) + Math.abs(p - l))) % 255;
     }
   const f = nt(h);
   await s.push_buffer(f);
@@ -2194,7 +2259,7 @@ async function en(i) {
   const g = i.getBoundingClientRect(), S = document.getElementById("info");
   S.textContent = "initial paste done.";
   const $ = function(G) {
-    const _t = G.pageX, L = G.pageY, Z = g.width / 2 + g.left, ct = g.height / 2 + g.top, lt = _t - Z, xt = -(L - ct), yt = lt * 2 / g.width, wt = xt * 2 / g.height, jt = 0.5 * (n * (wt + 1)), me = 0.5 * (n * (yt + 1)), At = [jt - u, me - u];
+    const _t = G.pageX, L = G.pageY, Z = g.width / 2 + g.left, lt = g.height / 2 + g.top, ct = _t - Z, xt = -(L - lt), yt = ct * 2 / g.width, wt = xt * 2 / g.height, jt = 0.5 * (n * (wt + 1)), me = 0.5 * (n * (yt + 1)), At = [jt - u, me - u];
     S.textContent = "offset: " + At, j.change_offset(At), d.run(), j.run(), v.run();
   };
   i.addEventListener("mousemove", $);
@@ -2251,10 +2316,10 @@ async function an() {
     [0, 1, 0, 0],
     [0, 0, 1, 0],
     [0, 0, 0, 1]
-  ], u = [2, 3, 2], _ = [30, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], c = new it(u, _, r, Float32Array);
-  c.attach_to_context(i), a.attach_to_context(i), console.log("inputVolume", c);
-  const l = new Ot(c, a, r);
-  l.attach_to_context(i), l.run();
+  ], u = [2, 3, 2], _ = [30, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], l = new it(u, _, r, Float32Array);
+  l.attach_to_context(i), a.attach_to_context(i), console.log("inputVolume", l);
+  const c = new Ot(l, a, r);
+  c.attach_to_context(i), c.run();
   const h = await a.pull_data();
   console.log("got result", h), console.log("outputDB", a);
 }
@@ -2262,7 +2327,7 @@ const _o = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   do_max_projection: sn
 }, Symbol.toStringTag, { value: "Module" }));
-class N {
+class W {
   constructor(t, e, n, o) {
     this.canvas = t, this.center = e, this.center ? (this.minus_center = O(-1, this.center), this.center_to_originM = b(null, this.minus_center), this.origin_to_centerM = b(null, this.center)) : (this.minus_center = null, this.center_to_originM = null, this.origin_to_centerM = null), this.initial_rotation = n || k(3), this.bounding_rect = t.getBoundingClientRect(), this.callbacks = [], o && this.add_callback(o), this.attach_listeners_to(t), this.active = !1, this.current_rotation = m(k(3), this.initial_rotation), this.next_rotation = this.current_rotation, this.last_stats = null;
   }
@@ -2294,9 +2359,9 @@ class N {
   do_rotation(t) {
     const e = this.last_stats, n = this.event_stats(t);
     this.next_stats = n;
-    const o = 1, s = o * (n.dx - e.dx), a = o * (n.dy - e.dy), r = Math.PI / 2, u = r * s, _ = r * a, c = Mt(u), l = Bt(_), h = m(
+    const o = 1, s = o * (n.dx - e.dx), a = o * (n.dy - e.dy), r = Math.PI / 2, u = r * s, _ = r * a, l = Mt(u), c = Bt(_), h = m(
       this.current_rotation,
-      m(c, l)
+      m(l, c)
     );
     this.next_rotation = h;
     const p = b(h);
@@ -2309,16 +2374,16 @@ class N {
       d(f);
   }
   event_stats(t) {
-    const e = this.bounding_rect, n = t.pageX, o = t.pageY, s = e.width / 2 + e.left, a = e.height / 2 + e.top, r = n - s, u = -(o - a), _ = r * 2 / e.width, c = u * 2 / e.height;
-    return { px: n, py: o, cx: s, cy: a, offsetx: r, offsety: u, dx: _, dy: c };
+    const e = this.bounding_rect, n = t.pageX, o = t.pageY, s = e.width / 2 + e.left, a = e.height / 2 + e.top, r = n - s, u = -(o - a), _ = r * 2 / e.width, l = u * 2 / e.height;
+    return { px: n, py: o, cx: s, cy: a, offsetx: r, offsety: u, dx: _, dy: l };
   }
   add_callback(t) {
     this.callbacks.push(t);
   }
 }
-const co = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const lo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  Orbiter: N
+  Orbiter: W
 }, Symbol.toStringTag, { value: "Module" }));
 function rn(i, t, e, n) {
   console.log("computing sample asyncronously"), (async () => await _n(i, t, e, n))();
@@ -2334,7 +2399,7 @@ async function _n(i, t, e, n) {
     [0, 0, -1],
     [1, 0, 0],
     [0, -1, 0]
-  ], new N(
+  ], new W(
     i,
     null,
     // center,
@@ -2348,16 +2413,16 @@ async function _n(i, t, e, n) {
   console.log("buffer", r);
   const u = new Float32Array(r);
   console.log("f32", u), J = u.slice(0, 3), console.log("shape_in", J);
-  const [_, c, l] = J;
+  const [_, l, c] = J;
   e && (e.max = 3 * _, e.min = -3 * _);
-  const h = Math.max(_, c, l), p = u.slice(3);
+  const h = Math.max(_, l, c), p = u.slice(3);
   var f = m(
     b(ht),
     b(null, [-h, -h, -h])
   );
   const d = k(4);
   d[1][1] = -1;
-  const y = b(null, [-_ / 2, -c / 2, -l / 2]);
+  const y = b(null, [-_ / 2, -l / 2, -c / 2]);
   var j = m(d, y);
   const v = o.volume(J, p, j, Float32Array);
   console.log("inputVolume", v);
@@ -2374,18 +2439,18 @@ async function _n(i, t, e, n) {
   console.log("outputDB", L), tt = o.max_projection(v, L, f), console.log("project_action", tt);
   const Z = new z($, S);
   Z.attach_to_context(o);
-  const ct = L.flatten_action(Z);
-  ct.attach_to_context(o);
-  const lt = o.panel($, S), xt = v.min_value, yt = v.max_value, wt = o.to_gray_panel(Z, lt, xt, yt), jt = o.paint(lt, i);
+  const lt = L.flatten_action(Z);
+  lt.attach_to_context(o);
+  const ct = o.panel($, S), xt = v.min_value, yt = v.max_value, wt = o.to_gray_panel(Z, ct, xt, yt), jt = o.paint(ct, i);
   Vt = o.sequence([
     tt,
-    ct,
+    lt,
     wt,
     jt
   ]), _e(0, 0, 0, e, n);
 }
 function _e(i, t, e, n, o) {
-  const s = Wt(i), a = Bt(t), r = Mt(e), u = m(m(s, a), r), [_, c, l] = J, h = Math.max(_, c, l);
+  const s = Nt(i), a = Bt(t), r = Mt(e), u = m(m(s, a), r), [_, l, c] = J, h = Math.max(_, l, c);
   var p = -h;
   n && (p = n.value), o && (o.textContent = p);
   const f = m(
@@ -2394,7 +2459,7 @@ function _e(i, t, e, n, o) {
   ), d = b(u), y = m(d, f);
   tt.change_matrix(y), Vt.run();
 }
-const lo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const co = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   do_pipeline: rn,
   do_rotation: _e
@@ -2412,17 +2477,17 @@ class Gt {
   }
   gpu_volume(t, e, n, o) {
     e = e || 1, n = n || 1, o = o || 1;
-    const [s, a, r] = this.shape, u = Math.max(r, a, s), _ = Math.max(o * r, n * a, e * s), c = u / _, l = [
-      [c * e, 0, 0, 0],
-      [0, c * n, 0, 0],
-      [0, 0, c * o, 0],
+    const [s, a, r] = this.shape, u = Math.max(r, a, s), _ = Math.max(o * r, n * a, e * s), l = u / _, c = [
+      [l * e, 0, 0, 0],
+      [0, l * n, 0, 0],
+      [0, 0, l * o, 0],
       [0, 0, 0, 1]
     ], p = m([
       [0, -1, 0, 0],
       [0, 0, 1, 0],
       [1, 0, 0, 0],
       [0, 0, 0, 1]
-    ], l), f = b(null, [-s / 2, -a / 2, -r / 2]), d = m(p, f);
+    ], c), f = b(null, [-s / 2, -a / 2, -r / 2]), d = m(p, f);
     return t.volume(
       this.shape,
       this.data,
@@ -2431,27 +2496,27 @@ class Gt {
     );
   }
 }
-function cn(i) {
+function ln(i) {
   const t = i.slice(0, 3), e = i.slice(3);
   return new Gt(t, e);
 }
-async function ln(i, t) {
+async function cn(i, t) {
   t = t || Float32Array;
-  const e = await ce(i), n = new t(e);
-  return cn(n);
+  const e = await le(i), n = new t(e);
+  return ln(n);
 }
 async function hn(i, t, e = Float32Array) {
-  const n = await ce(t), o = new e(n);
+  const n = await le(t), o = new e(n);
   return new Gt(i, o);
 }
-async function ce(i) {
+async function le(i) {
   return await (await (await fetch(i)).blob()).arrayBuffer();
 }
 const ho = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   Volume: Gt,
   fetch_volume: hn,
-  fetch_volume_prefixed: ln
+  fetch_volume_prefixed: cn
 }, Symbol.toStringTag, { value: "Module" })), pn = `
 // Select a range in depths or values from a depth buffer 
 // copied to output depth buffer at same ij locations where valid.
@@ -2622,7 +2687,7 @@ class P extends V {
       throw new Error("Volume is not attached to GPU context.");
     if (this.canvas_paint_sequence(n, t), e) {
       const o = this.get_orbiter_callback(), s = k(3);
-      this.orbiter = new N(
+      this.orbiter = new W(
         t,
         null,
         // center,
@@ -2747,7 +2812,7 @@ const mo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   View: P
 }, Symbol.toStringTag, { value: "Module" }));
-let le = class extends P {
+let ce = class extends P {
   async pick(t, e) {
     const n = await super.pick(t, e), o = n.panel_coords;
     return await this.max_depth_buffer.pull_data(), n.maximum = this.max_depth_buffer.location(
@@ -2791,7 +2856,7 @@ let le = class extends P {
 };
 const vo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  Max: le
+  Max: ce
 }, Symbol.toStringTag, { value: "Module" })), gn = `
 // suffix for pasting one panel onto another
 
@@ -3185,7 +3250,7 @@ class zn extends x {
     n.set(this.ijk2xyz, 0), n.set(this.intersections, 4 * 4), n[4 * 4 + 3 * 4 + 1] = this.threshold_value;
   }
 }
-class W extends rt {
+class N extends rt {
   constructor(t, e, n, o) {
     super(t, e), this.threshold_value = o, this.parameters = new zn(n, t, o);
   }
@@ -3202,7 +3267,7 @@ class W extends rt {
 }
 const jo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  ThresholdProject: W
+  ThresholdProject: N
 }, Symbol.toStringTag, { value: "Module" })), kn = `
 // for non-default entries of outputDB
 // put RGBA entries where RGB are scaled 255 representations of
@@ -3429,7 +3494,7 @@ class de extends P {
     const e = this.ofVolume;
     this.soft_volume = e.same_geometry(t), this.depth_buffer = this.get_output_depth_buffer(t), this.index_panel = this.get_output_panel(t), this.output_panel = this.get_output_panel(t), this.threshold_value = 0.5;
     const n = this.indexed_colors.length;
-    this.color_panel = t.panel(1, n), this.colors_promise = this.color_panel.push_buffer(this.indexed_colors), this.project_action = new W(
+    this.color_panel = t.panel(1, n), this.colors_promise = this.color_panel.push_buffer(this.indexed_colors), this.project_action = new N(
       e,
       this.depth_buffer,
       this.projection_matrix,
@@ -3563,16 +3628,16 @@ class En extends P {
     if (!a)
       throw new Error("Volume is not attached to GPU context.");
     this.attach_to_context(a);
-    const r = this.panel_sequence(a), u = a.paint(r.seg_slice_panel, t), _ = a.paint(r.max_panel, e), c = a.paint(r.intensity_slice_panel, n), l = a.paint(r.shaded_panel, o);
+    const r = this.panel_sequence(a), u = a.paint(r.seg_slice_panel, t), _ = a.paint(r.max_panel, e), l = a.paint(r.intensity_slice_panel, n), c = a.paint(r.shaded_panel, o);
     if (this.paint_sequence = a.sequence([
       r.sequence,
       u,
       _,
-      c,
-      l
+      l,
+      c
     ]), s) {
       const h = this.get_orbiter_callback(), p = k(3);
-      this.orbiter = new N(
+      this.orbiter = new W(
         o,
         null,
         // center,
@@ -3588,7 +3653,7 @@ class En extends P {
   }
   panel_sequence(t) {
     t = t || this.context, this.min_value = this.intensityVolume.min_value, this.max_value = this.intensityVolume.max_value, this.change_range(this.projection_matrix), this.current_depth = (this.min_depth + this.max_depth) / 2;
-    const e = [], n = new le(this.intensityVolume);
+    const e = [], n = new ce(this.intensityVolume);
     this.maxView = n, n.attach_to_context(t);
     const o = n.panel_sequence(t);
     e.push(o.sequence), this.slice_depth_buffer = this.get_output_depth_buffer(t), this.slice_value_panel = this.get_output_panel(t), this.slice_gray_panel = this.get_output_panel(t), this.slice_project_action = new C(
@@ -3675,7 +3740,7 @@ class Vn extends P {
   panel_sequence(t) {
     t = t || this.context;
     const e = this.ofVolume;
-    this.min_value = e.min_value, this.max_value = e.max_value, this.change_range(this.projection_matrix), this.soft_volume = e.same_geometry(t), this.soften_action = new H(e, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), this.threshold_depth_buffer = this.get_output_depth_buffer(t), this.threshold_value = this.threshold_value || (e.min_value + e.max_value) / 2, this.project_action = new W(
+    this.min_value = e.min_value, this.max_value = e.max_value, this.change_range(this.projection_matrix), this.soft_volume = e.same_geometry(t), this.soften_action = new H(e, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), this.threshold_depth_buffer = this.get_output_depth_buffer(t), this.threshold_value = this.threshold_value || (e.min_value + e.max_value) / 2, this.project_action = new N(
       e,
       this.threshold_depth_buffer,
       this.projection_matrix,
@@ -3778,7 +3843,7 @@ class Gn extends P {
     const e = this.ofVolume;
     this.depth_buffer = this.get_output_depth_buffer(t), this.panel = this.get_output_panel(t), this.min_value = e.min_value, this.max_value = e.max_value, this.threshold_value = (e.min_value + e.max_value) / 2;
     var n = e;
-    this.soften && (this.soft_volume = e.same_geometry(t), this.soften_action = new H(e, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), n = this.soft_volume), this.project_action = new W(
+    this.soften && (this.soft_volume = e.same_geometry(t), this.soften_action = new H(e, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), n = this.soft_volume), this.project_action = new N(
       n,
       this.depth_buffer,
       this.projection_matrix,
@@ -3827,13 +3892,16 @@ const Do = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
 }, Symbol.toStringTag, { value: "Module" }));
 class Ln extends P {
   constructor(t, e) {
-    super(t), this.range_callback = e;
+    super(t), this.range_callback = e, this.colorize = 0;
   }
   async run() {
     await this.soften_promise, super.run();
   }
   async paint_on(t, e) {
     throw new Error("Triptych.paint_on not implemented.");
+  }
+  async set_colorize(t) {
+    t ? this.colorize = 1 : this.colorize = 0, await this.max_gray_action.change_colorize(this.colorize), await this.slice_gray_action.change_colorize(this.colorize), this.run();
   }
   async paint_on_canvases(t, e, n, o) {
     const s = this.ofVolume.context;
@@ -3847,13 +3915,13 @@ class Ln extends P {
       u,
       _
     ]), o) {
-      const c = this.get_orbiter_callback(), l = k(3);
-      this.orbiter = new N(
+      const l = this.get_orbiter_callback(), c = k(3);
+      this.orbiter = new W(
         n,
         null,
         // center,
-        l,
-        c
+        c,
+        l
         // callback,
       ), this.orbiter.attach_listeners_to(t), this.orbiter.attach_listeners_to(e);
     }
@@ -3867,14 +3935,14 @@ class Ln extends P {
     debugger;
     t = t || this.context;
     const e = [], n = this.ofVolume;
-    this.min_value = n.min_value, this.max_value = n.max_value, this.change_range(this.projection_matrix), this.current_depth = (this.min_depth + this.max_depth) / 2, this.soft_volume = n.same_geometry(t), this.soften_action = new H(n, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), this.threshold_depth_buffer = this.get_output_depth_buffer(t), this.threshold_value = (n.min_value + n.max_value) / 2, this.soft_volume, this.threshold_project_action = new W(
+    this.min_value = n.min_value, this.max_value = n.max_value, this.change_range(this.projection_matrix), this.current_depth = (this.min_depth + this.max_depth) / 2, this.soft_volume = n.same_geometry(t), this.soften_action = new H(n, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), this.threshold_depth_buffer = this.get_output_depth_buffer(t), this.threshold_value = (n.min_value + n.max_value) / 2, this.soft_volume, this.threshold_project_action = new N(
       n,
       this.threshold_depth_buffer,
       this.projection_matrix,
       this.threshold_value
     ), this.threshold_project_action.attach_to_context(t), e.push(this.threshold_project_action);
     const o = 0;
-    return this.colorize_action = new Y(
+    this.colorize_action = new Y(
       this.soft_volume,
       this.threshold_depth_buffer,
       this.projection_matrix,
@@ -3883,11 +3951,15 @@ class Ln extends P {
       n,
       this.max_depth_buffer,
       this.projection_matrix
-    ), e.push(this.max_project_action), this.max_panel = this.get_output_panel(t), this.max_flatten_action = this.max_depth_buffer.flatten_action(this.max_panel), e.push(this.max_flatten_action), this.max_gray_panel = this.get_output_panel(t), this.max_gray_action = t.to_gray_panel(
+    ), e.push(this.max_project_action), this.max_panel = this.get_output_panel(t), this.max_flatten_action = this.max_depth_buffer.flatten_action(this.max_panel), e.push(this.max_flatten_action), this.max_gray_panel = this.get_output_panel(t);
+    let s = this.colorize;
+    debugger;
+    return this.max_gray_action = t.to_gray_panel(
       this.max_panel,
       this.max_gray_panel,
       this.min_value,
-      this.max_value
+      this.max_value,
+      s
     ), e.push(this.max_gray_action), this.slice_depth_buffer = this.get_output_depth_buffer(t), this.slice_value_panel = this.get_output_panel(t), this.slice_gray_panel = this.get_output_panel(t), this.slice_project_action = new C(
       n,
       this.slice_depth_buffer,
@@ -3897,7 +3969,8 @@ class Ln extends P {
       this.slice_value_panel,
       this.slice_gray_panel,
       this.min_value,
-      this.max_value
+      this.max_value,
+      s
     ), e.push(this.slice_gray_action), this.slice_output_panel = this.slice_gray_panel, this.max_output_panel = this.max_gray_panel, this.iso_output_panel = this.iso_panel, this.project_to_panel = t.sequence(e), {
       sequence: this.project_to_panel,
       iso_output_panel: this.iso_panel,
@@ -4077,10 +4150,10 @@ class qn {
     console.log("buffer", o);
     const s = new Uint32Array(o), a = new Float32Array(s);
     console.log("f32", a), this.volume_shape = a.slice(0, 3), this.volume_content = a.slice(3);
-    const [r, u, _] = this.volume_shape, c = k(4);
-    c[1][1] = -1;
-    const l = b(null, [-r / 2, -u / 2, -_ / 2]);
-    this.volume_matrix = m(c, l);
+    const [r, u, _] = this.volume_shape, l = k(4);
+    l[1][1] = -1;
+    const c = b(null, [-r / 2, -u / 2, -_ / 2]);
+    this.volume_matrix = m(l, c);
     debugger;
     await this.connect_future, this.volume = t.volume(
       this.volume_shape,
@@ -4117,7 +4190,7 @@ class qn {
     ], this.affine_translation = b(null, [-f / 2, -f / 2, -f]), this.projection_matrix = m(
       b(this.initial_rotation),
       this.affine_translation
-    ), this.project_action = new W(
+    ), this.project_action = new N(
       this.volume,
       this.depth_buffer,
       this.projection_matrix,
@@ -4136,7 +4209,7 @@ class qn {
       this.depth_buffer,
       this.projection_matrix,
       g
-    ), this.colorize_action.attach_to_context(t), this.orbiter = new N(
+    ), this.colorize_action.attach_to_context(t), this.orbiter = new W(
       this.canvas,
       null,
       // center,
@@ -4205,8 +4278,8 @@ class Un {
     console.log("f32", s), this.volume_shape = s.slice(0, 3), this.volume_content = s.slice(3);
     const [a, r, u] = this.volume_shape, _ = k(4);
     _[1][1] = -1;
-    const c = b(null, [-a / 2, -r / 2, -u / 2]);
-    this.volume_matrix = m(_, c);
+    const l = b(null, [-a / 2, -r / 2, -u / 2]);
+    this.volume_matrix = m(_, l);
     debugger;
     await this.connect_future, this.volume = t.volume(
       this.volume_shape,
@@ -4214,8 +4287,8 @@ class Un {
       this.volume_matrix,
       Float32Array
     ), console.log("input Volume", this.volume);
-    const l = this.volume.min_value, h = this.volume.max_value;
-    this.slider.min = l, this.slider.max = h, this.slider.value = (l + h) / 2, this.slider.step = (h - l) / 100;
+    const c = this.volume.min_value, h = this.volume.max_value;
+    this.slider.min = c, this.slider.max = h, this.slider.value = (c + h) / 2, this.slider.step = (h - c) / 100;
     const p = Math.max(a, r, u), f = Math.ceil(Math.sqrt(2) * p);
     this.output_shape = [f, f];
     const d = -1e4, y = -1e4;
@@ -4235,7 +4308,7 @@ class Un {
     ], this.affine_translation = b(null, [-f / 2, -f / 2, -f]), this.projection_matrix = m(
       b(this.initial_rotation),
       this.affine_translation
-    ), this.project_action = new W(
+    ), this.project_action = new N(
       this.volume,
       this.depth_buffer,
       this.projection_matrix,
@@ -4247,7 +4320,7 @@ class Un {
       this.depth_buffer,
       this.projection_matrix,
       j
-    ), this.colorize_action.attach_to_context(t), this.orbiter = new N(
+    ), this.colorize_action.attach_to_context(t), this.orbiter = new W(
       this.canvas,
       null,
       // center,
@@ -4343,7 +4416,7 @@ export {
   oo as CombineDepths,
   Qn as CopyAction,
   po as DepthBufferRange,
-  Nn as GPUAction,
+  Wn as GPUAction,
   Yn as GPUColorPanel,
   to as GPUContext,
   Fn as GPUDataObject,
@@ -4362,7 +4435,7 @@ export {
   Se as Painter_wgsl,
   io as PastePanel,
   Jn as Projection,
-  Wn as SampleVolume,
+  Nn as SampleVolume,
   So as SegmentationQuad,
   Po as SlicedThresholdView,
   ko as Soften,
@@ -4373,8 +4446,8 @@ export {
   Zn as UpdateGray,
   mo as ViewVolume,
   Mo as VolumeAtDepth,
-  co as canvas_orbit,
-  We as combine_depth_buffers_wgsl,
+  lo as canvas_orbit,
+  Ne as combine_depth_buffers_wgsl,
   so as combine_test,
   qo as context,
   Ee as convert_buffer_wgsl,
@@ -4408,7 +4481,7 @@ export {
   ut as panel_buffer_wgsl,
   Je as paste_panel_wgsl,
   ao as paste_test,
-  lo as pipeline_test,
+  co as pipeline_test,
   eo as sample_test,
   Mn as soften_volume_wgsl,
   Lo as threshold_test,
