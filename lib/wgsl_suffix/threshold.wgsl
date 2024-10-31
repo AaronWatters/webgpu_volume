@@ -69,6 +69,15 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
                 }
             }
         }
+
+        // debugging
+        //current_depth = bitcast<f32>(outputLocation.data_offset);
+        //current_value = bitcast<f32>(outputLocation.depth_offset);
+
+        //current_depth = bitcast<f32>(5u);
+        //current_value = bitcast<f32>(6u);
+        // end debugging
+
         outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;
         outputDB.data_and_depth[outputLocation.data_offset] = current_value;
     }
