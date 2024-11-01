@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>box test page</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        /* display: relative;  Chaned to relative positioning */
+    }
+    .images {
+        /* position: relative;  Added relative positioning */
+        /* flex: 1; */
+        display: flex;
+        gap: 5px;
+        display: inline-flex;
+        width: min-content;
+    }
+    .image {
+        flex: 1;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        margin: 5px;
+    }
+    .slider-container {
+        width: 550px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: left;
+        margin-top: 10px;
+    }
+    .slider {
+        width: 222px;
+        margin: 20px auto;
+    }
+</style>
+</head>
+<body>
+<h1>simple box test page</h1>
+
+<p id="info">Information here.</p>
+
+<!--
+<div class="slider-container">
+    <input type="range" min="0" max="360" id="depth-slider" class="slider">
+    <div class="slider-label">
+        <span>depth: &nbsp;</span>
+        <span id="depth-value">0</span>
+    </div>
+</div>
+-->
+
+<div class="container">
+    <div id="pick-div">pick info here.</div>
+    <div class="images">
+        <div class="image">
+            <canvas id="box-canvas" width="444" height="444"></canvas>
+            <br>
+            <div id="box-info">Shaded segmentation info here.</div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+
+    import * as box_test from "../lib/proofs_of_concepts/box_test.js";
+    //import * as CPUVolume from "../lib/data_objects/CPUVolume.js";
+    import * as GPUContext from "../lib/support/GPUContext.js";
+
+    function rndint() {
+        let x = Math.floor(Math.random() * 256);
+        return Math.max(1, x);
+    };
+    function rnd_color() {
+        //return 0xffffffff;
+        var rgb = [rndint(), rndint(), rndint()];
+        //debugger;
+        var M = Math.max(...rgb);
+        rgb = rgb.map(x => Math.floor(255 * x / M));
+        let [r, g, b] = rgb;
+        return (
+            r + 256 * (
+                b + 256 * (
+                    g + 256 * 255
+                )
+            ));
+    }
+    const random_colors = [0];  // index 0 is invisible
+    for (let i=0; i<100; i++) {
+        random_colors.push(rnd_color());
+    }
+
+    const boxCanvas = document.getElementById("box-canvas");
+    const boxInfo = document.getElementById("box-info");
+
+    function info(msg) {
+        boxInfo.textContent = msg;
+    };
+
+    var context, view;
+
+    async function go() {
+        context = new GPUContext.Context();
+        info("got gpu context");
+        await context.connect();
+        const colors = new Uint32Array(random_colors);
+        const width = 300;
+        view = new box_test.BoxTest(width, boxCanvas, context, colors);
+        //view = await box_test.debug_box(boxCanvas, context, colors); // debug.
+        const orbiting = true;
+        view.paint_on(boxCanvas, orbiting);
+        info('painted canvas');
+        console.log("view", view);
+    };
+
+    go();
+
+</script>
+</body>
