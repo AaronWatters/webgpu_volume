@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cylinder test page</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        /* display: relative;  Chaned to relative positioning */
+    }
+    .images {
+        /* position: relative;  Added relative positioning */
+        /* flex: 1; */
+        display: flex;
+        gap: 5px;
+        display: inline-flex;
+        width: min-content;
+    }
+    .image {
+        flex: 1;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        margin: 5px;
+    }
+    .slider-container {
+        width: 550px;
+        margin: 0 auto;
+    }
+    .slider-label {
+        display: flex;
+        justify-content: left;
+        margin-top: 10px;
+    }
+    .slider {
+        width: 222px;
+        margin: 20px auto;
+    }
+</style>
+</head>
+<body>
+<h1>cylinder test page</h1>
+
+<p id="info">Information here.</p>
+
+
+<div class="slider-container">
+    <input type="range" min="0" max="360" id="a-slider" class="slider" min="0" max="4">
+    <!-- <div class="slider-label">
+        <span>depth: &nbsp;</span>
+        <span id="depth-value">0</span>
+    </div> -->
+</div>
+<div class="slider-container">
+    <input type="range" min="0" max="360" id="b-slider" class="slider" min="0" max="4">
+    <!-- <div class="slider-label">
+        <span>depth: &nbsp;</span>
+        <span id="depth-value">0</span>
+    </div> -->
+</div>
+<div class="slider-container">
+    <input type="range" min="0" max="360" id="c-slider" class="slider" min="0" max="4">
+    <!-- <div class="slider-label">
+        <span>depth: &nbsp;</span>
+        <span id="depth-value">0</span>
+    </div> -->
+</div>
+
+
+<div class="container">
+    <div id="pick-div">pick info here.</div>
+    <div class="images">
+        <div class="image">
+            <canvas id="box-canvas" width="1300" height="1300"></canvas>
+            <br>
+            <div id="box-info">Shaded segmentation info here.</div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+
+    import * as test_4d from "../lib/proofs_of_concepts/test_4d.js";
+
+    const boxCanvas = document.getElementById("box-canvas");
+    const boxInfo = document.getElementById("box-info");
+
+    var context, view;
+
+    async function start() {
+        [context, view] = await test_4d.go(boxCanvas, boxInfo);
+    }
+    start();
+
+    const aSlider = document.getElementById("a-slider");
+    const bSlider = document.getElementById("b-slider");
+    const cSlider = document.getElementById("c-slider");
+
+    var da = 0.055;
+    var db = -0.033;
+    var dc = -0.022;
+    function step_slide() {
+        function step_slide(slider, delta) {
+            let value = parseFloat(slider.value);
+            value += delta;
+            if (value < slider.min) {
+                value = slider.min;
+                delta = Math.abs(delta);
+            }
+            else if (value > slider.max) {
+                value = slider.max;
+                delta = -Math.abs(delta);
+            } else if (Math.random() < 0.01) {
+                delta = -delta;
+            }
+            slider.value = value;
+            return delta;
+        }
+        da = step_slide(aSlider, da);
+        db = step_slide(bSlider, db);
+        dc = step_slide(cSlider, dc);
+        slide();
+    }
+
+    const animateButton = document.getElementById("animate-button");
+    var animating = false;
+    function animate() {
+        if (animating) {
+            step_slide();
+            requestAnimationFrame(animate);
+        }
+    };
+    function toggle_animation() {
+        animating = !animating;
+        if (animating) {
+            animateButton.textContent = "stop";
+            animate();
+        } else {
+            animateButton.textContent = "animate";
+        };
+    };
+    window.toggle_animation = toggle_animation;
+
+    function slide() {
+        const a = aSlider.value;
+        const b = bSlider.value;
+        const c = cSlider.value;
+        boxInfo.textContent = `a: ${a}, b: ${b}, c: ${c}`;
+        test_4d.change_rotation(view, a, b, c);
+        view.run();
+    }
+    function slide_config(slider) {
+        slider.min = -3;
+        slider.max = 3;
+        slider.step = .01;
+        slider.value = 0;
+        slider.addEventListener("input", slide);
+    }
+    slide_config(aSlider);
+    slide_config(bSlider);
+    slide_config(cSlider);
+
+    async function debug_callback() {
+        console.log("debug_callback view", view);
+        test_4d.change_rotation(view, 1, 3, -1);
+        view.run();
+        const buffer = await view.ofVolume.pull_buffer();
+        console.log("ofVolume buffer", buffer);
+        const floatbuffer = new Float32Array(buffer);
+        console.log("ofVolume floatbuffer", floatbuffer);
+        var min = floatbuffer[36];
+        var max = floatbuffer[36];
+        for (let i=36; i<floatbuffer.length; i++) {
+            if (floatbuffer[i] < min) {
+                min = floatbuffer[i];
+            }
+            if (floatbuffer[i] > max) {
+                max = floatbuffer[i];
+            }
+        }
+        console.log("min", min, "max", max);
+        info("debug_callback done, check console");
+    };
+    window.debug_callback = debug_callback;
+
+</script>
+<button onclick="toggle_animation()" id="animate-button">animate</button>
+<button onclick="debug_callback()">debug button</button>
+</body>
