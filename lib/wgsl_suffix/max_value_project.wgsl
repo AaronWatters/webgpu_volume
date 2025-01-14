@@ -5,13 +5,10 @@
 //  volume_frame.wgsl
 //  volume_intercept.wgsl
 
-// this version copied from old commit before
-// https://github.com/AaronWatters/webgpu_volume/commit/248a20ae8b9b2ea749fe1bda1dba79a050f43b2c
-
 struct parameters {
     ijk2xyz : mat4x4f,
     int3: Intersections3,
-    dk: f32,  // k increment for probe
+    dk: f32,  // k increment for probe  ??? historical????
     // 3 floats padding at end...???
 }
 
@@ -45,10 +42,37 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         );
         if (end_points.is_valid) {
             let offsetij_f = vec2f(offsetij);
+
+            // using probe_offsets..
+            let start_depth = end_points.offset[0];
+            let end_depth = end_points.offset[1];
+            // xxxx debug values
+            //let start_depth = 10.0f;
+            //let end_depth = 20.0f;
+            //let offset = vec2f(1.0, 2.0);
+            //let ijk2xyz2 = mat4x4f(
+            //    vec4f(1.0, 0.0, 0.0, 0.0),
+            //    vec4f(0.0, 1.0, 0.0, 0.0),
+            //    vec4f(0.0, 0.0, 1.0, 0.0),
+            //    vec4f(0.0, 0.0, 0.0, 1.0),
+            //);
+            let probe_stats = probe_stats0(offsetij_f, start_depth, end_depth, ijk2xyz);
+            let ddepth = (end_depth - start_depth) / f32(probe_stats.voxel_count);
+            for (var iteration=0u; iteration<=probe_stats.voxel_count; iteration++) {
+                let input_offset = voxel_probe_offset(iteration, probe_stats, &inputGeometry);
+                if (input_offset.is_valid) {
+                    let valueu32 = inputVolume.content[input_offset.offset];
+                    let value = bitcast<f32>(valueu32);
+                    if ((!initial_value_found) || (value > current_value)) {
+                        current_depth = ddepth * f32(iteration) + start_depth;
+                        current_value = value;
+                        initial_value_found = true;
+                    }
+                }
+            }
+/*
+            // previous version
             for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += dk) {
-                //let ijkw = vec4i(offsetij, depth, 1);
-                //let f_ijk = vec4f(ijkw);
-                //let xyz_probe = parms.ijk2xyz * f_ijk;
                 let xyz_probe = probe_point(offsetij_f, depth, ijk2xyz);
                 let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);
                 if (input_offset.is_valid) {
@@ -59,14 +83,9 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
                         current_value = value;
                         initial_value_found = true;
                     }
-                    // debug
-                    //let t = outputOffset/2u;
-                    //if (t * 2 == outputOffset) {
-                    //    current_value = bitcast<f32>(inputVolume.content[0]);
-                    //}
-                    // end debug
-                }
-            }
+                } 
+            } */
+            
         }
         outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;
         outputDB.data_and_depth[outputLocation.data_offset] = current_value;

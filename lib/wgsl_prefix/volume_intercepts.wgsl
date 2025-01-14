@@ -74,7 +74,7 @@ struct probeInterpolation {
     depth_offset: f32,
 }
 
-fn probe_stats(offset: vec2f, start_depth: f32, end_depth: f32, ijk2xyz: mat4x4f) 
+fn probe_stats0(offset: vec2f, start_depth: f32, end_depth: f32, ijk2xyz: mat4x4f) 
     -> probeInterpolation {
     var result: probeInterpolation;
     let start_xyz = probe_point(offset, start_depth, ijk2xyz);

@@ -46,7 +46,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
             // using probe_offsets..
             let start_depth = end_points.offset[0];
             let end_depth = end_points.offset[1];
-            let probe_stats = probe_stats(offsetij_f, start_depth, end_depth, ijk2xyz);
+            let probe_stats = probe_stats0(offsetij_f, start_depth, end_depth, ijk2xyz);
             let ddepth = probe_stats.depth_offset;
             for (var iteration=0u; iteration<=probe_stats.voxel_count; iteration++) {
                 if (value_found) {
