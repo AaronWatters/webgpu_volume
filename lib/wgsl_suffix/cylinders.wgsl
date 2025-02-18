@@ -32,6 +32,11 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     var outputGeometry = outputVolume.geometry;
     let width = outputGeometry.shape.xyz.z;
     let startOffset = columnOffset * width;
+    // shortcut return if startOffset is out of bounds
+    let test_index = index_of(startOffset, &outputGeometry);
+    if (!test_index.is_valid) {
+        return;
+    }
     //let capped = parms.capped;
     let default_value = f32(parms.default_value);
     let default_value_u32 = bitcast<u32>(default_value);
@@ -110,6 +115,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         outputVolume.content[18] = bitcast<u32>(99999.0); //sentinel
         */
         // iterate over all voxels in column
+        // xxxx should limit loop to columns interesecting cylinder bounding box
         for (var column=0u; column<width; column = column + 1u) {
             let outputOffset = startOffset + column;
             let output_index = index_of(outputOffset, &outputGeometry);
