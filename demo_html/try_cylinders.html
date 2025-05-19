@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>box test page</title>
+<title>cylinder test page</title>
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -43,7 +43,7 @@
 </style>
 </head>
 <body>
-<h1>simple box test page</h1>
+<h1>cylinder test page</h1>
 
 <p id="info">Information here.</p>
 
@@ -91,7 +91,7 @@
                     g + 256 * 255
                 )
             ));
-    }
+    };
     const random_colors = [0];  // index 0 is invisible
     for (let i=0; i<100; i++) {
         random_colors.push(rnd_color());
@@ -117,7 +117,7 @@
         const gpu_volume = cpu_volume.gpu_volume(context);
         const ncylinders = 30;
         //const pairs = []; // temp
-        const radius = 30; // ???
+        const radius = 3; // ???
         const low = 50;
         const high = width - low;
         const h2 = high / 2;
