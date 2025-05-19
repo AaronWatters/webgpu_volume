@@ -25,6 +25,28 @@ test('should have the right window.main.name', async ({ page }) => {
     expect(result).toBe("webgpu_volume");
 });
 
+test('should get a connected context', async ({ page }) => {
+    // Navigate to your web app
+    await page.goto('/');
+
+    // create and connect a context
+    const result = await page.evaluate(async () => {
+        window.saved_context = await window.main.GPUContext.get_connected_context();
+        return window.saved_context.connected;
+    });
+
+    // Verify that the result is as expected
+    expect(result).toBe(true);
+
+    // clean up
+    const result2 = await page.evaluate(async () => {
+      window.saved_context.destroy();
+      return window.saved_context.connected;
+    });
+
+    expect(result2).toBe(false);
+});
+
 /*
 test('should correctly sum two numbers using window.main.async_sum', async ({ page }) => {
     // Navigate to your web app
