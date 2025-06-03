@@ -34,6 +34,7 @@
     "vitest": "^2.0.5"
   },
   "dependencies": {
+    "prefetchjs": "github:aaronwatters/prefetchjs",
     "qd_vector": "github:aaronwatters/qd_vector"
   }
 }
