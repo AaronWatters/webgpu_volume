@@ -1665,6 +1665,9 @@ class ie extends M {
   async change_colorize(t) {
     this.qd_colorize = t, this.parameters.qd_colorize = t, await this.parameters.push_buffer();
   }
+  async change_range(t, e) {
+    this.min_value = t, this.max_value = e, this.parameters.min_value = t, this.parameters.max_value = e, await this.parameters.push_buffer();
+  }
 }
 class Gt extends ie {
   constructor(t, e, n, o, s) {
@@ -3995,7 +3998,7 @@ class In extends P {
     t ? this.colorize = 1 : this.colorize = 0, await this.max_gray_action.change_colorize(this.colorize), await this.slice_gray_action.change_colorize(this.colorize), this.run();
   }
   async change_volume(t) {
-    this.ofVolume.set_data(t), this.ofVolume.push_buffer(), this.min_value = this.ofVolume.min_value, this.max_value = this.ofVolume.max_value, this.run();
+    this.ofVolume.set_data(t), this.ofVolume.push_buffer(), this.min_value = this.ofVolume.min_value, this.max_value = this.ofVolume.max_value, await this.max_gray_action.change_range(this.min_value, this.max_value), await this.slice_gray_action.change_range(this.min_value, this.max_value), this.run();
   }
   async paint_on_canvases(t, e, n, o) {
     const s = this.ofVolume.context;
