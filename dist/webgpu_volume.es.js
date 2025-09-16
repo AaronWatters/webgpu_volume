@@ -51,8 +51,8 @@ class x {
       usage: s
     });
     if (t) {
-      const _ = a.getMappedRange(), c = t.constructor;
-      new c(_).set(t);
+      const _ = a.getMappedRange(), l = t.constructor;
+      new l(_).set(t);
     } else
       this.load_buffer(a);
     a.unmap();
@@ -101,10 +101,10 @@ class x {
     };
   }
 }
-const Fn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const $n = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   DataObject: x
-}, Symbol.toStringTag, { value: "Module" })), ge = "qd_vector";
+}, Symbol.toStringTag, { value: "Module" })), be = "qd_vector";
 function R(i) {
   const t = new Float64Array(i);
   return Array.from(t);
@@ -115,39 +115,39 @@ function st(i, t) {
     n[o] = i[o] + t[o];
   return n;
 }
-function Tt(i, t) {
+function qt(i, t) {
   const e = i.length, n = R(e);
   for (var o = 0; o < e; o++)
     n[o] = Math.min(i[o], t[o]);
   return n;
 }
-function qt(i, t) {
+function Ut(i, t) {
   const e = i.length, n = R(e);
   for (var o = 0; o < e; o++)
     n[o] = Math.max(i[o], t[o]);
   return n;
 }
-function O(i, t) {
+function E(i, t) {
   const e = t.length, n = R(e);
   for (var o = 0; o < e; o++)
     n[o] = i * t[o];
   return n;
 }
-function ve(i, t) {
+function xe(i, t) {
   return st(
     i,
-    O(-1, t)
+    E(-1, t)
   );
 }
-function Ut(i) {
+function It(i) {
   var t = 0;
   for (var e of i)
     t += e * e;
   return Math.sqrt(t);
 }
-function be(i) {
-  var t = Ut(i);
-  return O(1 / t, i);
+function ye(i) {
+  var t = It(i);
+  return E(1 / t, i);
 }
 function X(i, t) {
   const e = [];
@@ -170,13 +170,13 @@ function et(i, t) {
   const e = t.slice();
   return e.push(1), q(i, e).slice(0, 3);
 }
-function xe(i) {
+function we(i) {
   const t = [], e = i.length;
   for (var n = 0; n < e; n++)
     t.push(...i[n]);
   return t;
 }
-function It(i, t, e) {
+function Ft(i, t, e) {
   const n = i.length;
   if (n != t * e)
     throw new Error(`Length ${n} doesn't match rows ${t} and columns ${e}.`);
@@ -221,8 +221,8 @@ function m(i, t) {
     throw new Error("incompatible matrices.");
   for (var a = X(e, s), r = 0; r < e; r++)
     for (var u = 0; u < s; u++) {
-      for (var _ = 0, c = 0; c < o; c++)
-        _ += i[r][c] * t[c][u];
+      for (var _ = 0, l = 0; l < o; l++)
+        _ += i[r][l] * t[l][u];
       a[r][u] = _;
     }
   return a;
@@ -234,7 +234,7 @@ function vt(i) {
       n[o][s] = i[o][s];
   return n;
 }
-function ye(i, t = 1e-3) {
+function je(i, t = 1e-3) {
   const e = vt(i);
   for (var n of e)
     for (var o = 0; o < n.length; o++) {
@@ -243,13 +243,13 @@ function ye(i, t = 1e-3) {
     }
   return e;
 }
-function Ft(i, t, e, n) {
+function Ct(i, t, e, n) {
   var o = i;
   n || (o = vt(i));
   const s = o[t];
   return o[t] = o[e], o[e] = s, o;
 }
-function Ct(i, t) {
+function Rt(i, t) {
   const [e, n] = B(i), [o, s] = B(t);
   if (e != o)
     throw new Error("bad shapes: rows must match.");
@@ -262,7 +262,7 @@ function Ct(i, t) {
   }
   return a;
 }
-function Rt(i, t, e, n, o) {
+function Nt(i, t, e, n, o) {
   const s = n - t, a = o - e, r = X(s, a);
   for (var u = 0; u < s; u++)
     for (var _ = 0; _ < a; _++)
@@ -277,13 +277,13 @@ function Wt(i) {
       const h = Math.abs(t[u][s]);
       h > r && (r = h, a = u);
     }
-    a != u && (t = Ft(t, s, a, !0));
-    for (var _ = t[s][s], c = 1 / _, l = O(c, t[s]), u = 0; u < o; u++) {
+    a != u && (t = Ct(t, s, a, !0));
+    for (var _ = t[s][s], l = 1 / _, c = E(l, t[s]), u = 0; u < o; u++) {
       const p = t[u];
       if (u == s)
-        t[u] = l;
+        t[u] = c;
       else {
-        const f = p[s], d = O(-f, l), y = st(p, d);
+        const f = p[s], d = E(-f, c), y = st(p, d);
         t[u] = y;
       }
     }
@@ -291,10 +291,10 @@ function Wt(i) {
   return t;
 }
 function U(i) {
-  const t = i.length, e = k(t), n = Ct(i, e), o = Wt(n);
-  return Rt(o, 0, t, t, 2 * t);
+  const t = i.length, e = k(t), n = Rt(i, e), o = Wt(n);
+  return Nt(o, 0, t, t, 2 * t);
 }
-function Nt(i) {
+function $t(i) {
   var t = Math.cos(i), e = Math.sin(i), n = [
     [t, -e, 0],
     [e, t, 0],
@@ -302,7 +302,7 @@ function Nt(i) {
   ];
   return n;
 }
-function Bt(i) {
+function St(i) {
   var t = Math.cos(i), e = Math.sin(i), n = [
     [t, 0, e],
     [0, 1, 0],
@@ -310,7 +310,7 @@ function Bt(i) {
   ];
   return n;
 }
-function Mt(i) {
+function Pt(i) {
   var t = Math.cos(i), e = Math.sin(i), n = [
     [1, 0, 0],
     [0, t, e],
@@ -324,7 +324,7 @@ function Yt(i, t) {
     n += i[o] * t[o];
   return n;
 }
-function we(i, t) {
+function ze(i, t) {
   const [e, n, o] = i, [s, a, r] = t;
   return [
     n * r - o * a,
@@ -332,7 +332,7 @@ function we(i, t) {
     e * a - n * s
   ];
 }
-function je(i) {
+function ke(i) {
   var t = [];
   const [e, n] = B(i);
   for (var o = 0; o < e; o++)
@@ -348,7 +348,7 @@ function I(i) {
       t.push(i[s][o]);
   return t;
 }
-function ze(i) {
+function Be(i) {
   var t = [];
   const [e, n] = B(i);
   for (var o = 0; o < n; o++) {
@@ -358,43 +358,43 @@ function ze(i) {
   }
   return t;
 }
-const ke = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Me = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   MM_product: m,
-  M_as_list: xe,
+  M_as_list: we,
   M_column_major_order: I,
   M_copy: vt,
   M_inverse: U,
-  M_pitch: Bt,
+  M_pitch: St,
   M_reduce: Wt,
-  M_roll: Nt,
-  M_row_major_order: je,
+  M_roll: $t,
+  M_row_major_order: ke,
   M_shape: B,
-  M_slice: Rt,
-  M_tolerate: ye,
-  M_transpose: ze,
-  M_yaw: Mt,
+  M_slice: Nt,
+  M_tolerate: je,
+  M_transpose: Be,
+  M_yaw: Pt,
   M_zero: X,
   Mv_product: q,
   affine3d: b,
   apply_affine3d: et,
   eye: k,
-  list_as_M: It,
-  name: ge,
-  shelf: Ct,
-  swap_rows: Ft,
+  list_as_M: Ft,
+  name: be,
+  shelf: Rt,
+  swap_rows: Ct,
   v_add: st,
-  v_cross: we,
+  v_cross: ze,
   v_dot: Yt,
-  v_length: Ut,
-  v_maximum: qt,
-  v_minimum: Tt,
-  v_normalize: be,
-  v_scale: O,
-  v_sub: ve,
+  v_length: It,
+  v_maximum: Ut,
+  v_minimum: qt,
+  v_normalize: ye,
+  v_scale: E,
+  v_sub: xe,
   v_zero: R
 }, Symbol.toStringTag, { value: "Module" }));
-class $t {
+class Kt {
   constructor(t) {
     this.canvas = t;
   }
@@ -409,7 +409,7 @@ class $t {
     return this.normalize(t.clientX, t.clientY);
   }
 }
-class Kt {
+class Jt {
   // convert normalized coordinates to panel coordinates and back again.
   constructor(t, e) {
     this.height = t, this.width = e;
@@ -444,7 +444,7 @@ class pt {
     return et(this.ijk2xyz, t);
   }
 }
-class Jt extends pt {
+class Xt extends pt {
   constructor(t, e) {
     super(t), this.shape = e;
   }
@@ -467,14 +467,14 @@ class Jt extends pt {
     return this.ijk2xyz_v(this.offset2ijk(t));
   }
 }
-const Cn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Yn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  NormalizedCanvasSpace: $t,
-  PanelSpace: Kt,
+  NormalizedCanvasSpace: Kt,
+  PanelSpace: Jt,
   ProjectionSpace: pt,
-  VolumeSpace: Jt,
-  qdVector: ke
-}, Symbol.toStringTag, { value: "Module" })), Be = [
+  VolumeSpace: Xt,
+  qdVector: Me
+}, Symbol.toStringTag, { value: "Module" })), Se = [
   1,
   0,
   0,
@@ -492,31 +492,31 @@ const Cn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   0,
   1
 ];
-let it = class Xt extends x {
+let it = class Qt extends x {
   constructor(t, e, n, o) {
-    super(), o = o || Uint32Array, this.data_format = o, n || (n = It(Be, 4, 4)), this.data = null, this.min_value = null, this.max_value = null, this.set_shape(t, e), this.set_ijk2xyz(n), this.shape_offset = 0, this.ijk2xyz_offset = this.shape_offset + this.shape.length, this.xyz2ijk_offset = this.ijk2xyz_offset + this.ijk2xyz.length, this.content_offset = this.xyz2ijk_offset + this.xyz2ijk.length, this.buffer_size = (this.size + this.content_offset) * Int32Array.BYTES_PER_ELEMENT;
+    super(), o = o || Uint32Array, this.data_format = o, n || (n = Ft(Se, 4, 4)), this.data = null, this.min_value = null, this.max_value = null, this.set_shape(t, e), this.set_ijk2xyz(n), this.shape_offset = 0, this.ijk2xyz_offset = this.shape_offset + this.shape.length, this.xyz2ijk_offset = this.ijk2xyz_offset + this.ijk2xyz.length, this.content_offset = this.xyz2ijk_offset + this.xyz2ijk.length, this.buffer_size = (this.size + this.content_offset) * Int32Array.BYTES_PER_ELEMENT;
   }
   same_geometry(t) {
     t = t || this.context;
-    const e = new Xt(this.shape.slice(0, 3), null, this.matrix, this.data_format);
+    const e = new Qt(this.shape.slice(0, 3), null, this.matrix, this.data_format);
     return e.attach_to_context(t), e;
   }
   max_extent() {
-    const t = et(this.matrix, [0, 0, 0]), e = et(this.matrix, this.shape), n = st(O(-1, t), e);
+    const t = et(this.matrix, [0, 0, 0]), e = et(this.matrix, this.shape), n = st(E(-1, t), e);
     return Math.sqrt(Yt(n, n));
   }
   projected_range(t, e) {
     var n = t;
     e && (n = U(t));
     const o = m(n, this.matrix), [s, a, r, u] = this.shape;
-    var _ = null, c = null;
-    for (var l of [0, s])
+    var _ = null, l = null;
+    for (var c of [0, s])
       for (var h of [0, a])
         for (var p of [0, r]) {
-          const d = q(o, [l, h, p, 1]);
-          _ = _ ? qt(_, d) : d, c = c ? Tt(c, d) : d;
+          const d = q(o, [c, h, p, 1]);
+          _ = _ ? Ut(_, d) : d, l = l ? qt(l, d) : d;
         }
-    return { min: c, max: _ };
+    return { min: l, max: _ };
   }
   set_shape(t, e) {
     const [n, o, s] = t;
@@ -533,7 +533,7 @@ let it = class Xt extends x {
     this.min_value = n, this.max_value = o;
   }
   set_ijk2xyz(t) {
-    this.matrix = t, this.space = new Jt(t, this.shape);
+    this.matrix = t, this.space = new Xt(t, this.shape);
     const e = I(t);
     this.ijk2xyz = e, this.xyz2ijk = I(this.space.xyz2ijk);
   }
@@ -555,7 +555,7 @@ let it = class Xt extends x {
     return this.data = e.slice(this.content_offset), this.data;
   }
 };
-const Rn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Kn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   Volume: it
 }, Symbol.toStringTag, { value: "Module" })), Q = `
@@ -661,7 +661,7 @@ fn to_model(ijk : vec3u, geom : ptr<function, VolumeGeometry>) -> vec3f {
 // Convert xyz model position to checked index offset.
 fn offset_of_xyz(xyz : vec3f, geom : ptr<function, VolumeGeometry>) -> IndexOffset {
     return offset_of_f(to_index_f(xyz, geom), geom);
-}`, E = `
+}`, O = `
 // Framework for 4 byte depth buffer
 
 // keep everything f32 for simplicity of transfers
@@ -730,12 +730,12 @@ fn depth_buffer_indices(data_offset: u32, shape: depthShape) -> BufferLocation {
     }
     return result;
 }`;
-function Qt(i, t) {
+function Ht(i, t) {
   const e = Q + i;
   return t.device.createShaderModule({ code: e });
 }
-function Ht(i, t) {
-  const e = E + i;
+function Zt(i, t) {
+  const e = O + i;
   return t.device.createShaderModule({ code: e });
 }
 class V {
@@ -754,7 +754,7 @@ class V {
   add_pass(t) {
   }
 }
-class Zt extends V {
+class te extends V {
   // xxx could add bookkeeping so only actions with updated inputs execute.
   constructor(t) {
     super(), this.actions = t;
@@ -765,13 +765,13 @@ class Zt extends V {
       e.add_pass(t);
   }
 }
-const Wn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Jn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   Action: V,
-  ActionSequence: Zt,
-  depth_shader_code: Ht,
-  volume_shader_code: Qt
-}, Symbol.toStringTag, { value: "Module" })), Me = `
+  ActionSequence: te,
+  depth_shader_code: Zt,
+  volume_shader_code: Ht
+}, Symbol.toStringTag, { value: "Module" })), Pe = `
 // Suffix for testing frame operations.
 
 @group(0) @binding(0) var<storage, read> inputVolume : Volume;
@@ -794,14 +794,14 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         }
     }
 }`;
-class St extends V {
+class Dt extends V {
   constructor(t, e, n) {
     super(), this.volumeToSample = n, this.shape = t, this.ijk2xyz = e, this.targetVolume = new it(t, null, e);
   }
   attach_to_context(t) {
     const e = t.device, n = this.volumeToSample, o = this.targetVolume;
     this.targetVolume.attach_to_context(t);
-    const s = Qt(Me, t), a = o.bindGroupLayout("storage"), r = n.bindGroupLayout("read-only-storage"), u = e.createPipelineLayout({
+    const s = Ht(Pe, t), a = o.bindGroupLayout("storage"), r = n.bindGroupLayout("read-only-storage"), u = e.createPipelineLayout({
       bindGroupLayouts: [
         r,
         a
@@ -825,9 +825,9 @@ class St extends V {
     return await this.targetVolume.pull_data();
   }
 }
-const Nn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Xn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  SampleVolume: St
+  SampleVolume: Dt
 }, Symbol.toStringTag, { value: "Module" }));
 class z extends x {
   constructor(t, e) {
@@ -846,10 +846,10 @@ class z extends x {
     return new Uint8Array(this.buffer_content, n * o, o);
   }
 }
-const Yn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Qn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   Panel: z
-}, Symbol.toStringTag, { value: "Module" })), Se = `
+}, Symbol.toStringTag, { value: "Module" })), De = `
 // Paint colors to rectangle
 struct Out {
     @builtin(position) pos: vec4<f32>,
@@ -913,7 +913,7 @@ function nt(i) {
   }
   return e;
 }
-class te extends x {
+class ee extends x {
   constructor(t) {
     super(), this.match_panel(t), this.usage_flags = GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.VERTEX;
   }
@@ -947,7 +947,7 @@ class te extends x {
     this.match_panel(t), this.push_buffer(this.array);
   }
 }
-class ee {
+class ne {
   constructor(t, e, n, o) {
     t.byteLength == e * n && (t = nt(t));
     var s = this;
@@ -962,7 +962,7 @@ class ee {
 }
 class at extends V {
   constructor(t, e) {
-    super(), this.panel = t, this.to_canvas = e, this.uniforms = new te(t);
+    super(), this.panel = t, this.to_canvas = e, this.uniforms = new ee(t);
   }
   attach_to_context(t) {
     this.context = t;
@@ -981,7 +981,7 @@ class at extends V {
           format: "uint32"
         }
       ]
-    }, a = e.createShaderModule({ code: Se });
+    }, a = e.createShaderModule({ code: De });
     this.pipeline = e.createRenderPipeline({
       layout: "auto",
       vertex: {
@@ -1026,11 +1026,11 @@ class at extends V {
     r.setPipeline(o), r.setVertexBuffer(0, s), r.setBindGroup(0, a), r.draw(6, this.panel.size), r.end();
   }
 }
-const $n = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Hn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  ImagePainter: ee,
+  ImagePainter: ne,
   PaintPanel: at,
-  PaintPanelUniforms: te,
+  PaintPanelUniforms: ee,
   grey_to_rgba: nt
 }, Symbol.toStringTag, { value: "Module" }));
 class M extends V {
@@ -1041,7 +1041,7 @@ class M extends V {
     this.context = t;
     const e = t.device, n = this.source, o = this.target, s = this.parameters;
     n.attach_to_context(t), o.attach_to_context(t), s.attach_to_context(t);
-    const a = this.get_shader_module(t), r = o.bindGroupLayout("storage"), u = n.bindGroupLayout("read-only-storage"), _ = s.bindGroupLayout("read-only-storage"), c = e.createPipelineLayout({
+    const a = this.get_shader_module(t), r = o.bindGroupLayout("storage"), u = n.bindGroupLayout("read-only-storage"), _ = s.bindGroupLayout("read-only-storage"), l = e.createPipelineLayout({
       bindGroupLayouts: [
         u,
         r,
@@ -1049,7 +1049,7 @@ class M extends V {
       ]
     });
     this.pipeline = e.createComputePipeline({
-      layout: c,
+      layout: l,
       compute: {
         module: a,
         entryPoint: "main"
@@ -1066,25 +1066,25 @@ class M extends V {
     e.dispatchWorkgroups(o, s, a), e.end();
   }
 }
-const Kn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Zn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   UpdateAction: M
-}, Symbol.toStringTag, { value: "Module" })), Pe = 1e-15;
-function Pt(i, t) {
+}, Symbol.toStringTag, { value: "Module" })), Ee = 1e-15;
+function Et(i, t) {
   const e = new Float32Array(16), n = t.matrix, o = U(n), s = t.shape, a = m(o, i);
   for (var r = 0, u = 0; u < 3; u++) {
     const v = a[u], g = v[2];
     var _;
-    if (Math.abs(g) < Pe)
+    if (Math.abs(g) < Ee)
       _ = [0, 0, 1111, -1111];
     else {
-      const $ = s[u], G = -v[0] / g, _t = -v[1] / g;
-      var c = (0 - v[3]) / g, l = ($ - v[3]) / g;
-      c > l && ([c, l] = [l, c]), _ = [G, _t, c, l];
+      const Y = s[u], G = -v[0] / g, _t = -v[1] / g;
+      var l = (0 - v[3]) / g, c = (Y - v[3]) / g;
+      l > c && ([l, c] = [c, l]), _ = [G, _t, l, c];
     }
     e.set(_, r), r += 4;
   }
-  const h = [0, 0, 0, 1], p = U(a), f = q(p, h), d = O(-1, f);
+  const h = [0, 0, 0, 1], p = U(a), f = q(p, h), d = E(-1, f);
   function y(v) {
     const g = q(p, v), S = st(d, g);
     return Math.abs(S[2]);
@@ -1107,11 +1107,11 @@ class rt extends M {
     return [Math.ceil(this.target.size / 256), 1, 1];
   }
 }
-const Jn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const to = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   Project: rt,
-  intersection_buffer: Pt
-}, Symbol.toStringTag, { value: "Module" })), Dt = `
+  intersection_buffer: Et
+}, Symbol.toStringTag, { value: "Module" })), Ot = `
 // Logic for loop boundaries in volume scans.
 // This prefix assumes volume_frame.wgsl and depth_buffer.wgsl.
 
@@ -1187,7 +1187,7 @@ struct probeInterpolation {
     depth_offset: f32,
 }
 
-fn probe_stats(offset: vec2f, start_depth: f32, end_depth: f32, ijk2xyz: mat4x4f) 
+fn probe_stats0(offset: vec2f, start_depth: f32, end_depth: f32, ijk2xyz: mat4x4f) 
     -> probeInterpolation {
     var result: probeInterpolation;
     let start_xyz = probe_point(offset, start_depth, ijk2xyz);
@@ -1240,20 +1240,17 @@ fn intersect2(e1: Endpoints2, e2: Endpoints2) -> Endpoints2 {
     }
     return result;
 }
-`, De = `
+`, Oe = `
 // Project a volume by max value onto a depth buffer (suffix)
 // Assumes prefixes: 
 //  depth_buffer.wgsl
 //  volume_frame.wgsl
 //  volume_intercept.wgsl
 
-// this version copied from old commit before
-// https://github.com/AaronWatters/webgpu_volume/commit/248a20ae8b9b2ea749fe1bda1dba79a050f43b2c
-
 struct parameters {
     ijk2xyz : mat4x4f,
     int3: Intersections3,
-    dk: f32,  // k increment for probe
+    dk: f32,  // k increment for probe  ??? historical????
     // 3 floats padding at end...???
 }
 
@@ -1287,10 +1284,37 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         );
         if (end_points.is_valid) {
             let offsetij_f = vec2f(offsetij);
+
+            // using probe_offsets..
+            let start_depth = end_points.offset[0];
+            let end_depth = end_points.offset[1];
+            // xxxx debug values
+            //let start_depth = 10.0f;
+            //let end_depth = 20.0f;
+            //let offset = vec2f(1.0, 2.0);
+            //let ijk2xyz2 = mat4x4f(
+            //    vec4f(1.0, 0.0, 0.0, 0.0),
+            //    vec4f(0.0, 1.0, 0.0, 0.0),
+            //    vec4f(0.0, 0.0, 1.0, 0.0),
+            //    vec4f(0.0, 0.0, 0.0, 1.0),
+            //);
+            let probe_stats = probe_stats0(offsetij_f, start_depth, end_depth, ijk2xyz);
+            let ddepth = (end_depth - start_depth) / f32(probe_stats.voxel_count);
+            for (var iteration=0u; iteration<=probe_stats.voxel_count; iteration++) {
+                let input_offset = voxel_probe_offset(iteration, probe_stats, &inputGeometry);
+                if (input_offset.is_valid) {
+                    let valueu32 = inputVolume.content[input_offset.offset];
+                    let value = bitcast<f32>(valueu32);
+                    if ((!initial_value_found) || (value > current_value)) {
+                        current_depth = ddepth * f32(iteration) + start_depth;
+                        current_value = value;
+                        initial_value_found = true;
+                    }
+                }
+            }
+/*
+            // previous version
             for (var depth = end_points.offset[0]; depth < end_points.offset[1]; depth += dk) {
-                //let ijkw = vec4i(offsetij, depth, 1);
-                //let f_ijk = vec4f(ijkw);
-                //let xyz_probe = parms.ijk2xyz * f_ijk;
                 let xyz_probe = probe_point(offsetij_f, depth, ijk2xyz);
                 let input_offset = offset_of_xyz(xyz_probe.xyz, &inputGeometry);
                 if (input_offset.is_valid) {
@@ -1301,26 +1325,21 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
                         current_value = value;
                         initial_value_found = true;
                     }
-                    // debug
-                    //let t = outputOffset/2u;
-                    //if (t * 2 == outputOffset) {
-                    //    current_value = bitcast<f32>(inputVolume.content[0]);
-                    //}
-                    // end debug
-                }
-            }
+                } 
+            } */
+            
         }
         outputDB.data_and_depth[outputLocation.depth_offset] = current_depth;
         outputDB.data_and_depth[outputLocation.data_offset] = current_value;
     }
 }
 `;
-class Oe extends x {
+class Ve extends x {
   constructor(t, e, n) {
     super(), this.volume = e, this.depthBuffer = n, this.buffer_size = (4 * 4 + 4 * 3 + 4) * Int32Array.BYTES_PER_ELEMENT, this.set_matrix(t);
   }
   set_matrix(t) {
-    this.ijk2xyz = I(t), this.intersections = Pt(t, this.volume);
+    this.ijk2xyz = I(t), this.intersections = Et(t, this.volume);
   }
   load_buffer(t) {
     t = t || this.gpu_buffer;
@@ -1328,23 +1347,23 @@ class Oe extends x {
     n.set(this.ijk2xyz, 0), n.set(this.intersections, 4 * 4);
   }
 }
-class Ot extends rt {
+class Vt extends rt {
   constructor(t, e, n) {
-    super(t, e), this.parameters = new Oe(n, t, e);
+    super(t, e), this.parameters = new Ve(n, t, e);
   }
   get_shader_module(t) {
-    const e = Q + E + Dt + De;
+    const e = Q + O + Ot + Oe;
     return t.device.createShaderModule({ code: e });
   }
   //getWorkgroupCounts() {
   //    return [Math.ceil(this.target.size / 256), 1, 1];
   //};
 }
-const Xn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const eo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  MaxProject: Ot
+  MaxProject: Vt
 }, Symbol.toStringTag, { value: "Module" }));
-class zt extends V {
+class Bt extends V {
   constructor(t, e, n, o, s) {
     super(), this.fromDataObject = t, this.toDataObject = n, this.from_offset = e, this.to_offset = o, this.length = s;
   }
@@ -1359,9 +1378,9 @@ class zt extends V {
     );
   }
 }
-const Qn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const no = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  CopyData: zt
+  CopyData: Bt
 }, Symbol.toStringTag, { value: "Module" }));
 class F extends x {
   constructor(t, e, n, o, s, a) {
@@ -1377,7 +1396,7 @@ class F extends x {
       this.data_format
     );
     t.attach_to_context(this.context);
-    const e = new zt(
+    const e = new Bt(
       this,
       0,
       t,
@@ -1391,7 +1410,7 @@ class F extends x {
     const [n, o] = [this.width, this.height], [s, a] = [t.width, t.height];
     if (n != s || o != a)
       throw new Error("w/h must match: " + [n, o, s, a]);
-    return new zt(
+    return new Bt(
       this,
       e,
       t,
@@ -1434,21 +1453,21 @@ class F extends x {
     if (r == this.default_value && u == this.default_depth)
       return null;
     if (s.data = r, s.depth = u, n) {
-      const _ = [t, e, u], c = n.ijk2xyz_v(_);
-      if (s.xyz = c, o) {
-        const l = o.space.xyz2ijk_v(c), h = l.map((f) => Math.floor(f));
+      const _ = [t, e, u], l = n.ijk2xyz_v(_);
+      if (s.xyz = l, o) {
+        const c = o.space.xyz2ijk_v(l), h = c.map((f) => Math.floor(f));
         s.volume_ijk = h;
-        const p = o.space.ijk2offset(l);
+        const p = o.space.ijk2offset(c);
         s.volume_offset = p, p != null && (s.volume_data = o.data[p]);
       }
     }
     return s;
   }
 }
-const Hn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const oo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   DepthBuffer: F
-}, Symbol.toStringTag, { value: "Module" })), ne = `
+}, Symbol.toStringTag, { value: "Module" })), oe = `
 // Prefix for converting f32 to rgba gray values.
 // Prefix for convert_buffer.wgsl
 
@@ -1532,7 +1551,7 @@ fn new_out_value(in_value: u32, out_value: u32, parms: parameters) -> u32 {
     //let result = gray_level + 256 * (gray_level + 256 * (gray_level + 256 * 255));
     //let result = 255u + 256 * (gray_level + 256 * (gray_level + 256 * gray_level));
     return result;
-}`, Ee = `
+}`, Ge = `
 // Suffix for converting or combining data from one data object buffer to another.
 
 // Assume that prefix defines struct parameters with members
@@ -1566,7 +1585,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         outputBuffer[output_index] = new_output_value;
     }
 }
-`, Ve = `
+`, Le = `
 
 // Suffix for converting or combining data from one depth buffer buffer to another.
 // This respects depth buffer default (null) markers.
@@ -1610,12 +1629,11 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         outputDB.data_and_depth[outputLocation.data_offset] = current_value;
     }
 }`;
-class oe extends x {
+class se extends x {
   constructor(t, e, n, o, s, a) {
     super(), this.input_start = t, this.output_start = e, this.length = n, this.min_value = o, this.max_value = s, a = a || 0, this.qd_colorize = a, this.buffer_size = 6 * Int32Array.BYTES_PER_ELEMENT;
   }
   load_buffer(t) {
-    debugger;
     t = t || this.gpu_buffer;
     const e = t.getMappedRange(), n = new Uint32Array(e);
     n[0] = this.input_start, n[1] = this.output_start, n[2] = this.length;
@@ -1623,12 +1641,12 @@ class oe extends x {
     o[3] = this.min_value, o[4] = this.max_value, n[5] = this.qd_colorize;
   }
 }
-class se extends M {
+class ie extends M {
   constructor(t, e, n, o, s, a, r, u) {
     super(), this.from_start = n, this.to_start = o, this.length = s, this.min_value = a, this.max_value = r, this.qd_colorize = u || 0, this.source = t, this.target = e;
   }
   attach_to_context(t) {
-    this.parameters = new oe(
+    this.parameters = new se(
       this.from_start,
       this.to_start,
       this.length,
@@ -1638,7 +1656,7 @@ class se extends M {
     ), super.attach_to_context(t);
   }
   get_shader_module(t) {
-    const e = ne + Ee;
+    const e = oe + Ge;
     return t.device.createShaderModule({ code: e });
   }
   getWorkgroupCounts() {
@@ -1648,7 +1666,7 @@ class se extends M {
     this.qd_colorize = t, this.parameters.qd_colorize = t, await this.parameters.push_buffer();
   }
 }
-class Et extends se {
+class Gt extends ie {
   constructor(t, e, n, o, s) {
     const a = t.size;
     if (a != e.size)
@@ -1669,9 +1687,9 @@ class Et extends se {
     await this.source.pull_buffer(), this.compute_extrema();
   }
 }
-class ie extends M {
+class ae extends M {
   constructor(t, e, n, o) {
-    super(), this.source = t, this.target = e, this.min_value = n, this.max_value = o, this.parameters = new oe(
+    super(), this.source = t, this.target = e, this.min_value = n, this.max_value = o, this.parameters = new se(
       0,
       // not used
       0,
@@ -1683,33 +1701,33 @@ class ie extends M {
     );
   }
   get_shader_module(t) {
-    const e = E + ne + Ve;
+    const e = O + oe + Le;
     return t.device.createShaderModule({ code: e });
   }
   getWorkgroupCounts() {
     return [Math.ceil(this.target.size / 256), 1, 1];
   }
 }
-const Zn = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const so = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  PaintDepthBufferGray: ie,
-  ToGrayPanel: Et,
-  UpdateGray: se
+  PaintDepthBufferGray: ae,
+  ToGrayPanel: Gt,
+  UpdateGray: ie
 }, Symbol.toStringTag, { value: "Module" }));
-function Ge() {
+function Ae() {
   return new w();
 }
-async function Le() {
+async function Te() {
   const i = new w();
   return await i.connect(), i;
 }
-function Ae() {
+function qe() {
   if (!navigator.gpu || !navigator.gpu.requestAdapter)
     throw alert("Cannot get WebGPU context. This browser does not have WebGPU enabled."), new Error("Can't get WebGPU context.");
 }
 class w {
   constructor() {
-    Ae(), this.adapter = null, this.device = null, this.connected = !1;
+    qe(), this.adapter = null, this.device = null, this.connected = !1;
   }
   async connect() {
     try {
@@ -1774,7 +1792,7 @@ class w {
   // Action conveniences.
   sample(t, e, n) {
     this.must_be_connected();
-    const o = new St(t, e, n);
+    const o = new Dt(t, e, n);
     return o.attach_to_context(this), o;
   }
   paint(t, e) {
@@ -1784,7 +1802,7 @@ class w {
   }
   to_gray_panel(t, e, n, o, s) {
     this.must_be_connected();
-    const a = new Et(
+    const a = new Gt(
       t,
       e,
       n,
@@ -1795,7 +1813,7 @@ class w {
   }
   max_projection(t, e, n) {
     this.must_be_connected();
-    const o = new Ot(
+    const o = new Vt(
       t,
       e,
       n
@@ -1804,22 +1822,22 @@ class w {
   }
   sequence(t) {
     this.must_be_connected();
-    const e = new Zt(
+    const e = new te(
       t
     );
     return e.attach_to_context(this), e;
   }
 }
-const to = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const io = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   Context: w,
-  get_connected_context: Le,
-  get_context: Ge
+  get_connected_context: Te,
+  get_context: Ae
 }, Symbol.toStringTag, { value: "Module" }));
-function Te() {
-  console.log("computing sample asyncronously"), (async () => await qe())();
+function Ue() {
+  console.log("computing sample asyncronously"), (async () => await Ie())();
 }
-async function qe() {
+async function Ie() {
   debugger;
   const i = new w();
   await i.connect();
@@ -1835,53 +1853,53 @@ async function qe() {
     [0, 0, 0, 1]
   ], s = [2, 2, 3], a = [30, 2, 4, 6, 8, 10, 1, 3, 5, 7, 9, 11], r = new it(e, n, t);
   r.attach_to_context(i);
-  const u = new St(s, o, r);
+  const u = new Dt(s, o, r);
   u.attach_to_context(i), u.run();
   const _ = await u.pull();
   console.log("expected", a), console.log("got output", _);
 }
-const eo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const ao = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  do_sample: Te
+  do_sample: Ue
 }, Symbol.toStringTag, { value: "Module" }));
-var ft, ae, A;
-function Ue(i) {
-  A = new ee(re, 2, 2, i);
+var ft, re, A;
+function Fe(i) {
+  A = new ne(ue, 2, 2, i);
 }
-function Ie(i) {
-  console.log("painting panel asyncronously"), ae = i, ft = new w(), ft.connect_then_call(Ce);
+function Ce(i) {
+  console.log("painting panel asyncronously"), re = i, ft = new w(), ft.connect_then_call(Ne);
 }
 function D(i, t, e, n) {
   return i * 255 + 256 * (t * 255 + 256 * (e * 255 + 256 * n * 255));
 }
-const re = new Uint32Array([
+const ue = new Uint32Array([
   D(1, 0, 0, 1),
   D(0, 1, 0, 1),
   D(0, 0, 1, 1),
   D(1, 1, 0, 1)
-]), Fe = new Uint32Array([
+]), Re = new Uint32Array([
   D(0, 1, 0, 1),
   D(0, 0, 1, 1),
   D(1, 1, 0, 1),
   D(1, 0, 0, 1)
 ]);
-var T = re, dt = Fe, K;
-function Ce() {
-  K = new z(2, 2), A = new at(K, ae), K.attach_to_context(ft), A.attach_to_context(ft), K.push_buffer(T), A.run();
-}
-function Re(i) {
-  [T, dt] = [dt, T], K.push_buffer(T), A.reset(K), A.run();
+var T = ue, dt = Re, K;
+function Ne() {
+  K = new z(2, 2), A = new at(K, re), K.attach_to_context(ft), A.attach_to_context(ft), K.push_buffer(T), A.run();
 }
 function We(i) {
+  [T, dt] = [dt, T], K.push_buffer(T), A.reset(K), A.run();
+}
+function $e(i) {
   [T, dt] = [dt, T], A.change_image(T);
 }
-const no = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const ro = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  change_paint: We,
-  change_paint1: Re,
-  do_paint: Ue,
-  do_paint1: Ie
-}, Symbol.toStringTag, { value: "Module" })), Ne = `
+  change_paint: $e,
+  change_paint1: We,
+  do_paint: Fe,
+  do_paint1: Ce
+}, Symbol.toStringTag, { value: "Module" })), Ye = `
 // Suffix pasting input depth buffer over output where depth dominates
 // Requires "depth_buffer.wgsl"
 
@@ -1923,7 +1941,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         }
     }
 }`;
-class Ye extends x {
+class Ke extends x {
   // xxxx possibly refactor/generalize this.
   constructor(t, e) {
     super(), this.offset_ij = t, this.sign = e, this.buffer_size = 3 * Int32Array.BYTES_PER_ELEMENT;
@@ -1934,14 +1952,14 @@ class Ye extends x {
     n.set(this.offset_ij), n[2] = this.sign;
   }
 }
-class ue extends V {
+class _e extends V {
   constructor(t, e, n, o) {
-    super(), this.outputDB = t, this.inputDB = e, this.offset_ij = n || [0, 0], this.sign = o || 1, this.parameters = new Ye(this.offset_ij, this.sign);
+    super(), this.outputDB = t, this.inputDB = e, this.offset_ij = n || [0, 0], this.sign = o || 1, this.parameters = new Ke(this.offset_ij, this.sign);
   }
   attach_to_context(t) {
     const e = t.device, n = this.inputDB, o = this.outputDB, s = this.parameters;
     s.attach_to_context(t);
-    const a = Ht(Ne, t), r = o.bindGroupLayout("storage"), u = n.bindGroupLayout("read-only-storage"), _ = s.bindGroupLayout("read-only-storage"), c = e.createPipelineLayout({
+    const a = Zt(Ye, t), r = o.bindGroupLayout("storage"), u = n.bindGroupLayout("read-only-storage"), _ = s.bindGroupLayout("read-only-storage"), l = e.createPipelineLayout({
       bindGroupLayouts: [
         u,
         r,
@@ -1949,7 +1967,7 @@ class ue extends V {
       ]
     });
     this.pipeline = e.createComputePipeline({
-      layout: c,
+      layout: l,
       compute: {
         module: a,
         entryPoint: "main"
@@ -1966,14 +1984,14 @@ class ue extends V {
     return [Math.ceil(this.target.size / 256), 1, 1];
   }
 }
-const oo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const uo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  CombineDepths: ue
+  CombineDepths: _e
 }, Symbol.toStringTag, { value: "Module" }));
-function $e() {
-  console.log("computing sample asyncronously"), (async () => await Ke())();
+function Je() {
+  console.log("computing sample asyncronously"), (async () => await Xe())();
 }
-async function Ke() {
+async function Xe() {
   const i = new w();
   await i.connect();
   const t = [3, 3], e = -666, n = -666, o = [
@@ -2032,17 +2050,17 @@ async function Ke() {
     Float32Array
   );
   u.attach_to_context(i), _.attach_to_context(i);
-  const c = new ue(
+  const l = new _e(
     _,
     u
   );
-  c.attach_to_context(i), c.run();
-  const l = await _.pull_data();
-  console.log("got result", l), console.log("outputDB", _);
+  l.attach_to_context(i), l.run();
+  const c = await _.pull_data();
+  console.log("got result", c), console.log("outputDB", _);
 }
-const so = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const _o = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  do_combine: $e
+  do_combine: Je
 }, Symbol.toStringTag, { value: "Module" })), ut = `
 // Framework for panel buffer structure
 // A panel consists of a buffer representing a rectangular screen region.
@@ -2101,7 +2119,7 @@ fn f_pack_color(color: vec3f) -> u32 {
     return ucolor[0] + 
         256u * (ucolor[1] + 256u * (ucolor[2] + 256u * 255u));
 }
-`, Je = `
+`, Qe = `
 // suffix for pasting one panel onto another
 
 struct parameters {
@@ -2132,7 +2150,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         }
     }
 }`;
-class Xe extends x {
+class He extends x {
   constructor(t, e, n) {
     super(), this.in_hw = t, this.out_hw = e, this.offset = n, this.buffer_size = 6 * Int32Array.BYTES_PER_ELEMENT;
   }
@@ -2146,27 +2164,27 @@ class mt extends M {
   constructor(t, e, n) {
     super();
     const o = [t.height, t.width], s = [e.height, e.width];
-    this.parameters = new Xe(o, s, n), this.from_hw = o, this.to_hw = s, this.offset = n, this.source = t, this.target = e;
+    this.parameters = new He(o, s, n), this.from_hw = o, this.to_hw = s, this.offset = n, this.source = t, this.target = e;
   }
   change_offset(t) {
     this.offset = t, this.parameters.offset = t, this.parameters.push_buffer();
   }
   get_shader_module(t) {
-    const e = ut + Je;
+    const e = ut + Qe;
     return t.device.createShaderModule({ code: e });
   }
   getWorkgroupCounts() {
     return [Math.ceil(this.source.size / 256), 1, 1];
   }
 }
-const io = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const lo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   PastePanel: mt
 }, Symbol.toStringTag, { value: "Module" }));
-function Qe() {
-  console.log("pasting asyncronously"), (async () => await He())();
+function Ze() {
+  console.log("pasting asyncronously"), (async () => await tn())();
 }
-async function He() {
+async function tn() {
   debugger;
   const i = new w();
   await i.connect();
@@ -2202,17 +2220,17 @@ async function He() {
   const a = await e.pull_buffer();
   console.log("got result", a);
 }
-const ao = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const co = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  do_paste: Qe
+  do_paste: Ze
 }, Symbol.toStringTag, { value: "Module" }));
-function Ze(i) {
-  console.log("pasting asyncronously"), tn(en(i));
+function en(i) {
+  console.log("pasting asyncronously"), nn(on(i));
 }
-function tn(i) {
+function nn(i) {
   (async () => await i)();
 }
-async function en(i) {
+async function on(i) {
   debugger;
   const t = new w();
   await t.connect();
@@ -2220,17 +2238,17 @@ async function en(i) {
   o.attach_to_context(t), s.attach_to_context(t), a.attach_to_context(t);
   const r = new Uint8Array(e * e), u = e / 2;
   for (var _ = 0; _ < e; _++)
-    for (var c = 0; c < e; c++) {
-      const G = _ * e + c;
-      r[G] = (Math.abs(u - _) + Math.abs(u - c)) * 10 % 255;
+    for (var l = 0; l < e; l++) {
+      const G = _ * e + l;
+      r[G] = (Math.abs(u - _) + Math.abs(u - l)) * 10 % 255;
     }
-  const l = nt(r);
-  await o.push_buffer(l);
+  const c = nt(r);
+  await o.push_buffer(c);
   const h = new Uint8Array(n * n), p = n / 2;
   for (var _ = 0; _ < n; _++)
-    for (var c = 0; c < n; c++) {
-      const L = _ * n + c;
-      h[L] = (255 - 2 * (Math.abs(p - _) + Math.abs(p - c))) % 255;
+    for (var l = 0; l < n; l++) {
+      const L = _ * n + l;
+      h[L] = (255 - 2 * (Math.abs(p - _) + Math.abs(p - l))) % 255;
     }
   const f = nt(h);
   await s.push_buffer(f);
@@ -2250,20 +2268,20 @@ async function en(i) {
   v.attach_to_context(t), v.run();
   const g = i.getBoundingClientRect(), S = document.getElementById("info");
   S.textContent = "initial paste done.";
-  const $ = function(G) {
-    const _t = G.pageX, L = G.pageY, Z = g.width / 2 + g.left, ct = g.height / 2 + g.top, lt = _t - Z, xt = -(L - ct), yt = lt * 2 / g.width, wt = xt * 2 / g.height, jt = 0.5 * (n * (wt + 1)), me = 0.5 * (n * (yt + 1)), At = [jt - u, me - u];
-    S.textContent = "offset: " + At, j.change_offset(At), d.run(), j.run(), v.run();
+  const Y = function(G) {
+    const _t = G.pageX, L = G.pageY, Z = g.width / 2 + g.left, lt = g.height / 2 + g.top, ct = _t - Z, yt = -(L - lt), wt = ct * 2 / g.width, jt = yt * 2 / g.height, zt = 0.5 * (n * (jt + 1)), ve = 0.5 * (n * (wt + 1)), Tt = [zt - u, ve - u];
+    S.textContent = "offset: " + Tt, j.change_offset(Tt), d.run(), j.run(), v.run();
   };
-  i.addEventListener("mousemove", $);
+  i.addEventListener("mousemove", Y);
 }
-const ro = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const ho = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  do_mouse_paste: Ze
+  do_mouse_paste: en
 }, Symbol.toStringTag, { value: "Module" }));
-function nn() {
-  console.log("computing sample asyncronously"), (async () => await on())();
+function sn() {
+  console.log("computing sample asyncronously"), (async () => await an())();
 }
-async function on() {
+async function an() {
   const i = new w();
   await i.connect();
   const t = new z(3, 3), e = new z(3, 3);
@@ -2280,19 +2298,19 @@ async function on() {
     9
   ]);
   t.push_buffer(n);
-  const o = new Et(t, e, 0, 10);
+  const o = new Gt(t, e, 0, 10);
   o.attach_to_context(i), o.run();
   const s = await e.pull_buffer();
   console.log("got result", s);
 }
-const uo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const po = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  do_gray: nn
+  do_gray: sn
 }, Symbol.toStringTag, { value: "Module" }));
-function sn() {
-  console.log("computing sample asyncronously"), (async () => await an())();
+function rn() {
+  console.log("computing sample asyncronously"), (async () => await un())();
 }
-async function an() {
+async function un() {
   debugger;
   const i = new w();
   await i.connect();
@@ -2308,20 +2326,20 @@ async function an() {
     [0, 1, 0, 0],
     [0, 0, 1, 0],
     [0, 0, 0, 1]
-  ], u = [2, 3, 2], _ = [30, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], c = new it(u, _, r, Float32Array);
-  c.attach_to_context(i), a.attach_to_context(i), console.log("inputVolume", c);
-  const l = new Ot(c, a, r);
-  l.attach_to_context(i), l.run();
+  ], u = [2, 3, 2], _ = [30, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], l = new it(u, _, r, Float32Array);
+  l.attach_to_context(i), a.attach_to_context(i), console.log("inputVolume", l);
+  const c = new Vt(l, a, r);
+  c.attach_to_context(i), c.run();
   const h = await a.pull_data();
   console.log("got result", h), console.log("outputDB", a);
 }
-const _o = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const fo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  do_max_projection: sn
+  do_max_projection: rn
 }, Symbol.toStringTag, { value: "Module" }));
-class W {
+class N {
   constructor(t, e, n, o) {
-    this.canvas = t, this.center = e, this.center ? (this.minus_center = O(-1, this.center), this.center_to_originM = b(null, this.minus_center), this.origin_to_centerM = b(null, this.center)) : (this.minus_center = null, this.center_to_originM = null, this.origin_to_centerM = null), this.initial_rotation = n || k(3), this.bounding_rect = t.getBoundingClientRect(), this.callbacks = [], o && this.add_callback(o), this.attach_listeners_to(t), this.active = !1, this.current_rotation = m(k(3), this.initial_rotation), this.next_rotation = this.current_rotation, this.last_stats = null;
+    this.canvas = t, this.center = e, this.center ? (this.minus_center = E(-1, this.center), this.center_to_originM = b(null, this.minus_center), this.origin_to_centerM = b(null, this.center)) : (this.minus_center = null, this.center_to_originM = null, this.origin_to_centerM = null), this.initial_rotation = n || k(3), this.bounding_rect = t.getBoundingClientRect(), this.callbacks = [], o && this.add_callback(o), this.attach_listeners_to(t), this.active = !1, this.current_rotation = m(k(3), this.initial_rotation), this.next_rotation = this.current_rotation, this.last_stats = null;
   }
   attach_listeners_to(t) {
     const e = this;
@@ -2351,9 +2369,9 @@ class W {
   do_rotation(t) {
     const e = this.last_stats, n = this.event_stats(t);
     this.next_stats = n;
-    const o = 1, s = o * (n.dx - e.dx), a = o * (n.dy - e.dy), r = Math.PI / 2, u = r * s, _ = r * a, c = Mt(u), l = Bt(_), h = m(
+    const o = 1, s = o * (n.dx - e.dx), a = o * (n.dy - e.dy), r = Math.PI / 2, u = r * s, _ = r * a, l = Pt(u), c = St(_), h = m(
       this.current_rotation,
-      m(c, l)
+      m(l, c)
     );
     this.next_rotation = h;
     const p = b(h);
@@ -2366,37 +2384,37 @@ class W {
       d(f);
   }
   event_stats(t) {
-    const e = this.bounding_rect, n = t.pageX, o = t.pageY, s = e.width / 2 + e.left, a = e.height / 2 + e.top, r = n - s, u = -(o - a), _ = r * 2 / e.width, c = u * 2 / e.height;
-    return { px: n, py: o, cx: s, cy: a, offsetx: r, offsety: u, dx: _, dy: c };
+    const e = this.bounding_rect, n = t.pageX, o = t.pageY, s = e.width / 2 + e.left, a = e.height / 2 + e.top, r = n - s, u = -(o - a), _ = r * 2 / e.width, l = u * 2 / e.height;
+    return { px: n, py: o, cx: s, cy: a, offsetx: r, offsety: u, dx: _, dy: l };
   }
   add_callback(t) {
     this.callbacks.push(t);
   }
 }
-const co = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const mo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  Orbiter: W
+  Orbiter: N
 }, Symbol.toStringTag, { value: "Module" }));
-function rn(i, t, e, n) {
-  console.log("computing sample asyncronously"), (async () => await _n(i, t, e, n))();
+function _n(i, t, e, n) {
+  console.log("computing sample asyncronously"), (async () => await cn(i, t, e, n))();
 }
-var tt, Vt, J, ht;
-function un(i) {
+var tt, Lt, J, ht;
+function ln(i) {
   const [t, e, n] = J, o = Math.max(t, e, n), s = b(null, [-o, -o, -o]), a = m(i, s);
-  tt.change_matrix(a), Vt.run();
+  tt.change_matrix(a), Lt.run();
 }
-async function _n(i, t, e, n) {
+async function cn(i, t, e, n) {
   debugger;
   t = t || "./mri.bin", ht = [
     [0, 0, -1],
     [1, 0, 0],
     [0, -1, 0]
-  ], new W(
+  ], new N(
     i,
     null,
     // center,
     ht,
-    un
+    ln
     // callback,
   );
   const o = new w();
@@ -2405,20 +2423,20 @@ async function _n(i, t, e, n) {
   console.log("buffer", r);
   const u = new Float32Array(r);
   console.log("f32", u), J = u.slice(0, 3), console.log("shape_in", J);
-  const [_, c, l] = J;
+  const [_, l, c] = J;
   e && (e.max = 3 * _, e.min = -3 * _);
-  const h = Math.max(_, c, l), p = u.slice(3);
+  const h = Math.max(_, l, c), p = u.slice(3);
   var f = m(
     b(ht),
     b(null, [-h, -h, -h])
   );
   const d = k(4);
   d[1][1] = -1;
-  const y = b(null, [-_ / 2, -c / 2, -l / 2]);
+  const y = b(null, [-_ / 2, -l / 2, -c / 2]);
   var j = m(d, y);
   const v = o.volume(J, p, j, Float32Array);
   console.log("inputVolume", v);
-  const g = [h * 2, h * 2], [S, $] = g, L = o.depth_buffer(
+  const g = [h * 2, h * 2], [S, Y] = g, L = o.depth_buffer(
     g,
     -100,
     -100,
@@ -2429,34 +2447,103 @@ async function _n(i, t, e, n) {
     Float32Array
   );
   console.log("outputDB", L), tt = o.max_projection(v, L, f), console.log("project_action", tt);
-  const Z = new z($, S);
+  const Z = new z(Y, S);
   Z.attach_to_context(o);
-  const ct = L.flatten_action(Z);
-  ct.attach_to_context(o);
-  const lt = o.panel($, S), xt = v.min_value, yt = v.max_value, wt = o.to_gray_panel(Z, lt, xt, yt), jt = o.paint(lt, i);
-  Vt = o.sequence([
+  const lt = L.flatten_action(Z);
+  lt.attach_to_context(o);
+  const ct = o.panel(Y, S), yt = v.min_value, wt = v.max_value, jt = o.to_gray_panel(Z, ct, yt, wt), zt = o.paint(ct, i);
+  Lt = o.sequence([
     tt,
-    ct,
-    wt,
-    jt
-  ]), _e(0, 0, 0, e, n);
+    lt,
+    jt,
+    zt
+  ]), le(0, 0, 0, e, n);
 }
-function _e(i, t, e, n, o) {
-  const s = Nt(i), a = Bt(t), r = Mt(e), u = m(m(s, a), r), [_, c, l] = J, h = Math.max(_, c, l);
+function le(i, t, e, n, o) {
+  const s = $t(i), a = St(t), r = Pt(e), u = m(m(s, a), r), [_, l, c] = J, h = Math.max(_, l, c);
   var p = -h;
   n && (p = n.value), o && (o.textContent = p);
   const f = m(
     b(ht),
     b(null, [-h, -h, p])
   ), d = b(u), y = m(d, f);
-  tt.change_matrix(y), Vt.run();
+  tt.change_matrix(y), Lt.run();
 }
-const lo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const go = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  do_pipeline: rn,
-  do_rotation: _e
+  do_pipeline: _n,
+  do_rotation: le
 }, Symbol.toStringTag, { value: "Module" }));
-class Gt {
+var hn = Object.defineProperty, pn = (i, t, e) => t in i ? hn(i, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : i[t] = e, kt = (i, t, e) => pn(i, typeof t != "symbol" ? t + "" : t, e);
+class fn {
+  constructor(t, e) {
+    kt(this, "url_prefix"), kt(this, "url_suffixes"), kt(this, "buffer_promises"), this.url_prefix = t, this.url_suffixes = e, this.buffer_promises = [];
+    for (let n = 0; n < e.length; n++)
+      this.buffer_promises.push(null);
+  }
+  // fetch a url by index
+  async fetch_by_index(t) {
+    const e = this.url_suffixes.length;
+    if (t < 0 || t >= e)
+      throw console.log("Index out of bounds", t, e), new Error("Index out of bounds: " + t);
+    const n = this.url_prefix + this.url_suffixes[t], o = await fetch(n);
+    if (o.status !== 200)
+      throw console.log("Error fetching url", n, o.status), new Error("Error fetching url: " + n);
+    return await o.arrayBuffer();
+  }
+  // fetch an index, prefetch the next, forget the previous
+  fetch_buffer(t) {
+    const e = this.url_suffixes.length, n = this.buffer_promises;
+    return n[t] === null && (n[t] = this.fetch_by_index(t)), t + 1 < e && n[t + 1] === null && (n[t + 1] = this.fetch_by_index(t + 1)), t - 1 >= 0 && (n[t - 1] = null), n[t];
+  }
+}
+class dn {
+  constructor(t, e, n) {
+    t == null ? (this.is_prefixed = !0, this.shape = null, this.size = null, this.cpu_volume = null) : (this.is_prefixed = !1, this.shape = t, this.size = t[0] * t[1] * t[2], this.cpu_volume = bt(t, null)), this.url_prefix = e, this.url_suffixes = n, this._gpu_volume = null, this.index = 0, this.prefetcher = new fn(e, n);
+  }
+  async fetch(t) {
+    if (t == null && (t = this.index), t < 0 || t >= this.url_suffixes.length)
+      throw new Error(`index ${t} out of range [0, ${this.url_suffixes.length})`);
+    this.index = t;
+    const e = await this.prefetcher.fetch_buffer(t), n = new Float32Array(e);
+    if (this.is_prefixed) {
+      const o = ce(n);
+      if (this.shape == null)
+        this.shape = o.shape, this.size = o.size;
+      else {
+        const s = o.size;
+        if (this.size != s)
+          throw new Error(
+            `data length ${s} can't change shape ${this.size}`
+          );
+        if (this.shape[0] != o.shape[0] || this.shape[1] != o.shape[1] || this.shape[2] != o.shape[2])
+          throw new Error(
+            `data shape ${o.shape} doesn't match shape ${this.shape}`
+          );
+      }
+      this.shape = o.shape, this.size = o.size, this.cpu_volume = o;
+    } else {
+      const o = n.length;
+      if (this.size != o)
+        throw new Error(
+          `data length ${o} doesn't match shape ${this.shape}`
+        );
+      this.cpu_volume.data = n, gpu_data = n;
+    }
+    this._gpu_volume && (this._gpu_volume.data = this.cpu_volume.data, await this._gpu_volume.push_buffer());
+  }
+  async fetch_next() {
+    this.index += 1, this.index >= this.url_suffixes.length && (this.index = 0), await this.fetch(this.index);
+  }
+  gpu_volume(t, e, n, o) {
+    if (this._gpu_volume)
+      return this._gpu_volume;
+    if (this.cpu_volume == null)
+      throw new Error("VolumeSequence.fetch() must be called first.");
+    return this._gpu_volume = this.cpu_volume.gpu_volume(t, e, n, o), this._gpu_volume;
+  }
+}
+class bt {
   constructor(t, e) {
     const [n, o, s] = t;
     if (this.shape = t, this.size = s * o * n, e) {
@@ -2471,17 +2558,17 @@ class Gt {
   }
   gpu_volume(t, e, n, o) {
     e = e || 1, n = n || 1, o = o || 1;
-    const [s, a, r] = this.shape, u = Math.max(r, a, s), _ = Math.max(o * r, n * a, e * s), c = u / _, l = [
-      [c * e, 0, 0, 0],
-      [0, c * n, 0, 0],
-      [0, 0, c * o, 0],
+    const [s, a, r] = this.shape, u = Math.max(r, a, s), _ = Math.max(o * r, n * a, e * s), l = u / _, c = [
+      [l * e, 0, 0, 0],
+      [0, l * n, 0, 0],
+      [0, 0, l * o, 0],
       [0, 0, 0, 1]
     ], p = m([
       [0, -1, 0, 0],
       [0, 0, 1, 0],
       [1, 0, 0, 0],
       [0, 0, 0, 1]
-    ], l), f = b(null, [-s / 2, -a / 2, -r / 2]), d = m(p, f);
+    ], c), f = b(null, [-s / 2, -a / 2, -r / 2]), d = m(p, f);
     return t.volume(
       this.shape,
       this.data,
@@ -2490,28 +2577,29 @@ class Gt {
     );
   }
 }
-function cn(i) {
+function ce(i) {
   const t = i.slice(0, 3), e = i.slice(3);
-  return new Gt(t, e);
+  return new bt(t, e);
 }
-async function ln(i, t) {
+async function mn(i, t) {
   t = t || Float32Array;
-  const e = await ce(i), n = new t(e);
-  return cn(n);
+  const e = await he(i), n = new t(e);
+  return ce(n);
 }
-async function hn(i, t, e = Float32Array) {
-  const n = await ce(t), o = new e(n);
-  return new Gt(i, o);
+async function gn(i, t, e = Float32Array) {
+  const n = await he(t), o = new e(n);
+  return new bt(i, o);
 }
-async function ce(i) {
+async function he(i) {
   return await (await (await fetch(i)).blob()).arrayBuffer();
 }
-const ho = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const vo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  Volume: Gt,
-  fetch_volume: hn,
-  fetch_volume_prefixed: ln
-}, Symbol.toStringTag, { value: "Module" })), pn = `
+  Volume: bt,
+  VolumeSequence: dn,
+  fetch_volume: gn,
+  fetch_volume_prefixed: mn
+}, Symbol.toStringTag, { value: "Module" })), vn = `
 // Select a range in depths or values from a depth buffer 
 // copied to output depth buffer at same ij locations where valid.
 
@@ -2558,7 +2646,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         outputDB.data_and_depth[outputLocation.data_offset] = current_value;
     }
 }`;
-class fn extends x {
+class bn extends x {
   constructor(t, e, n) {
     super(), this.lower_bound = t, this.upper_bound = e, this.do_values = n, this.buffer_size = 4 * Int32Array.BYTES_PER_ELEMENT;
   }
@@ -2570,7 +2658,7 @@ class fn extends x {
 }
 class ot extends M {
   constructor(t, e, n, o, s) {
-    super(), this.source = t, this.target = e, this.parameters = new fn(n, o, s);
+    super(), this.source = t, this.target = e, this.parameters = new bn(n, o, s);
   }
   change_bounds(t, e) {
     this.parameters.lower_bound = t, this.parameters.upper_bound = e, this.parameters.push_buffer();
@@ -2582,17 +2670,17 @@ class ot extends M {
     this.change_bounds(this.parameters.lower_bound, t);
   }
   get_shader_module(t) {
-    const e = E + pn;
+    const e = O + vn;
     return t.device.createShaderModule({ code: e });
   }
   getWorkgroupCounts() {
     return [Math.ceil(this.source.size / 256), 1, 1];
   }
 }
-const po = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const bo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   DepthRange: ot
-}, Symbol.toStringTag, { value: "Module" })), dn = `
+}, Symbol.toStringTag, { value: "Module" })), xn = `
 // suffix for pasting one panel onto another
 
 struct parameters {
@@ -2639,7 +2727,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         outputBuffer[out_location.offset] = value;
     }
 }`;
-class mn extends x {
+class yn extends x {
   constructor(t, e, n) {
     super(), this.in_hw = t, this.out_hw = e, this.default_color = n, this.buffer_size = 6 * Int32Array.BYTES_PER_ELEMENT;
   }
@@ -2649,7 +2737,7 @@ class mn extends x {
     n.set(this.in_hw), n.set(this.out_hw, 2), n[4] = this.default_color;
   }
 }
-class bt extends M {
+class xt extends M {
   // all color values are Uint32 encoded RGBA
   constructor(t, e, n) {
     super();
@@ -2657,19 +2745,19 @@ class bt extends M {
     if (o != 1)
       throw new Error("indexed colors should have width 1: " + o);
     const s = [t.height, o], a = [e.height, e.width];
-    this.parameters = new mn(s, a, n), this.from_hw = s, this.to_hw = a, this.default_color = n, this.source = t, this.target = e;
+    this.parameters = new yn(s, a, n), this.from_hw = s, this.to_hw = a, this.default_color = n, this.source = t, this.target = e;
   }
   get_shader_module(t) {
-    const e = ut + dn;
+    const e = ut + xn;
     return t.device.createShaderModule({ code: e });
   }
   getWorkgroupCounts() {
     return [Math.ceil(this.target.size / 256), 1, 1];
   }
 }
-const fo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const xo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  IndexColorizePanel: bt
+  IndexColorizePanel: xt
 }, Symbol.toStringTag, { value: "Module" }));
 class P extends V {
   constructor(t) {
@@ -2681,7 +2769,7 @@ class P extends V {
       throw new Error("Volume is not attached to GPU context.");
     if (this.canvas_paint_sequence(n, t), e) {
       const o = this.get_orbiter_callback(), s = k(3);
-      this.orbiter = new W(
+      this.orbiter = new N(
         t,
         null,
         // center,
@@ -2694,8 +2782,8 @@ class P extends V {
   }
   pick_on(t, e, n) {
     n = n || "click";
-    const o = new $t(t), [s, a] = this.output_shape;
-    this.panel_space = new Kt(s, a);
+    const o = new Kt(t), [s, a] = this.output_shape;
+    this.panel_space = new Jt(s, a);
     const r = this;
     t.addEventListener(n, async function(u) {
       const _ = await r.pick(u, o);
@@ -2802,11 +2890,11 @@ class P extends V {
     };
   }
 }
-const mo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const yo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   View: P
 }, Symbol.toStringTag, { value: "Module" }));
-let le = class extends P {
+let pe = class extends P {
   async pick(t, e) {
     const n = await super.pick(t, e), o = n.panel_coords;
     return await this.max_depth_buffer.pull_data(), n.maximum = this.max_depth_buffer.location(
@@ -2848,10 +2936,10 @@ let le = class extends P {
     super.change_matrix(t), this.project_action.change_matrix(t);
   }
 };
-const vo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const jo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  Max: le
-}, Symbol.toStringTag, { value: "Module" })), gn = `
+  Max: pe
+}, Symbol.toStringTag, { value: "Module" })), wn = `
 // suffix for pasting one panel onto another
 
 struct parameters {
@@ -2887,7 +2975,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         outputBuffer[out_location.offset] = mix_value;
     }
 }`;
-let vn = class extends x {
+let jn = class extends x {
   constructor(t, e, n) {
     super(), this.in_hw = t, this.out_hw = e, this.ratios = n, this.buffer_size = 8 * Int32Array.BYTES_PER_ELEMENT;
   }
@@ -2906,30 +2994,30 @@ class gt extends M {
     for (var a of n)
       if (a > 1 || a < 0)
         throw new Error("Invalid ratio: " + a);
-    this.parameters = new vn(o, s, n), this.from_hw = o, this.to_hw = s, this.ratios = n, this.source = t, this.target = e;
+    this.parameters = new jn(o, s, n), this.from_hw = o, this.to_hw = s, this.ratios = n, this.source = t, this.target = e;
   }
   change_ratio(t) {
     this.ratios = [t, t, t, t], this.parameters.ratios = this.ratios, this.parameters.push_buffer();
   }
   get_shader_module(t) {
-    const e = ut + gn;
+    const e = ut + wn;
     return t.device.createShaderModule({ code: e });
   }
   getWorkgroupCounts() {
     return [Math.ceil(this.source.size / 256), 1, 1];
   }
 }
-class Lt extends gt {
+class At extends gt {
   constructor(t, e, n) {
     const o = [n, n, n, n];
     super(t, e, o);
   }
 }
-const xo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const ko = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  MixPanels: Lt,
+  MixPanels: At,
   MixPanelsRatios: gt
-}, Symbol.toStringTag, { value: "Module" })), bn = `
+}, Symbol.toStringTag, { value: "Module" })), zn = `
 // Mix two depth buffers with color values.
 // The shapes of the buffers should usually match.
 
@@ -2971,7 +3059,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         outputDB.data_and_depth[outputLocation.data_offset] = currentData;
     }
 }`;
-class xn extends x {
+class kn extends x {
   constructor(t) {
     super(), this.ratios = t, this.buffer_size = 4 * Int32Array.BYTES_PER_ELEMENT;
   }
@@ -2981,25 +3069,25 @@ class xn extends x {
     new Float32Array(e).set(this.ratios, 0);
   }
 }
-class kt extends M {
+class Mt extends M {
   constructor(t, e, n) {
-    super(), this.source = t, this.target = e, this.ratios = n, this.parameters = new xn(n);
+    super(), this.source = t, this.target = e, this.ratios = n, this.parameters = new kn(n);
   }
   change_ratio(t) {
     this.ratios = [t, t, t, t], this.parameters.ratios = this.ratios, this.parameters.push_buffer();
   }
   get_shader_module(t) {
-    const e = ut + E + bn;
+    const e = ut + O + zn;
     return t.device.createShaderModule({ code: e });
   }
   getWorkgroupCounts() {
     return [Math.ceil(this.target.size / 256), 1, 1];
   }
 }
-const yo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Bo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  MixDepthBuffers: kt
-}, Symbol.toStringTag, { value: "Module" })), yn = `
+  MixDepthBuffers: Mt
+}, Symbol.toStringTag, { value: "Module" })), Bn = `
 struct parameters {
     in_hw: vec2u,
     n_dots: u32,
@@ -3078,7 +3166,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     }
 }
 `;
-class wn extends x {
+class Mn extends x {
   constructor(t, e) {
     super(), this.in_hw = t, this.n_dots = e, this.buffer_size = 4 * Int32Array.BYTES_PER_ELEMENT;
   }
@@ -3091,7 +3179,7 @@ class wn extends x {
     this.n_dots = t, this.push_buffer();
   }
 }
-class he {
+class fe {
   constructor(t, e, n, o) {
     this.position = t, this.radius = e, this.u32color = n, this.ratios = o;
   }
@@ -3100,12 +3188,12 @@ class he {
     e.set(this.ratios, o), e.set(this.position, o + 4), e.set([this.radius], o + 6), n.set([this.u32color], o + 7);
   }
 }
-class pe extends z {
+class de extends z {
   constructor(t) {
     super(8, t), this.dots = [], this.max_ndots = t;
   }
   add_dot(t, e, n, o) {
-    const s = new he(t, e, n, o);
+    const s = new fe(t, e, n, o);
     if (this.dots.length >= this.max_ndots)
       throw new Error("Too many dots: " + this.dots.length);
     this.dots.push(s);
@@ -3120,14 +3208,14 @@ class pe extends z {
       this.dots[s].put_on_panel(s, o, n);
   }
 }
-class fe extends M {
+class me extends M {
   constructor(t, e) {
-    super(), this.on_panel = t, this.max_ndots = e, this.dots_panel = new pe(e);
+    super(), this.on_panel = t, this.max_ndots = e, this.dots_panel = new de(e);
     const n = [t.height, t.width];
-    this.parameters = new wn(n, 0), this.source = this.dots_panel, this.target = t;
+    this.parameters = new Mn(n, 0), this.source = this.dots_panel, this.target = t;
   }
   get_shader_module(t) {
-    const e = ut + yn;
+    const e = ut + Bn;
     return t.device.createShaderModule({ code: e });
   }
   ndots() {
@@ -3150,12 +3238,12 @@ class fe extends M {
     this.dots_panel.add_dot(t, e, n, o);
   }
 }
-const wo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Mo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  ColoredDot: he,
-  DotsPanel: pe,
-  MixDotsOnPanel: fe
-}, Symbol.toStringTag, { value: "Module" })), jn = `
+  ColoredDot: fe,
+  DotsPanel: de,
+  MixDotsOnPanel: me
+}, Symbol.toStringTag, { value: "Module" })), Sn = `
 // Project a volume where the values cross a threshold
 // Assumes prefixes: 
 //  panel_buffer.wgsl
@@ -3240,12 +3328,12 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     }
 }
 `;
-class zn extends x {
+class Pn extends x {
   constructor(t, e, n) {
     super(), this.volume = e, this.threshold_value = n, this.buffer_size = (4 * 4 + 4 * 3 + 4) * Int32Array.BYTES_PER_ELEMENT, this.set_matrix(t);
   }
   set_matrix(t) {
-    this.ijk2xyz = I(t), this.intersections = Pt(t, this.volume);
+    this.ijk2xyz = I(t), this.intersections = Et(t, this.volume);
   }
   load_buffer(t) {
     t = t || this.gpu_buffer;
@@ -3253,25 +3341,25 @@ class zn extends x {
     n.set(this.ijk2xyz, 0), n.set(this.intersections, 4 * 4), n[4 * 4 + 3 * 4 + 1] = this.threshold_value;
   }
 }
-class N extends rt {
+class W extends rt {
   constructor(t, e, n, o) {
-    super(t, e), this.threshold_value = o, this.parameters = new zn(n, t, o);
+    super(t, e), this.threshold_value = o, this.parameters = new Pn(n, t, o);
   }
   change_threshold(t) {
     this.threshold_value = t, this.parameters.threshold_value = t, this.parameters.push_buffer();
   }
   get_shader_module(t) {
-    const e = Q + E + Dt + jn;
+    const e = Q + O + Ot + Sn;
     return t.device.createShaderModule({ code: e });
   }
   //getWorkgroupCounts() {
   //    return [Math.ceil(this.target.size / 256), 1, 1];
   //};
 }
-const jo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const So = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  ThresholdProject: N
-}, Symbol.toStringTag, { value: "Module" })), kn = `
+  ThresholdProject: W
+}, Symbol.toStringTag, { value: "Module" })), Dn = `
 // for non-default entries of outputDB
 // put RGBA entries where RGB are scaled 255 representations of
 // approximate normals (direction of greatest increase) at the
@@ -3368,7 +3456,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
         outputDB.data_and_depth[outputLocation.data_offset] = bitcast<f32>(output_value);
     }
 }`;
-class Bn extends x {
+class En extends x {
   constructor(t, e) {
     super(), this.set_matrix(t), this.default_value = e, this.buffer_size = (4 * 4 + 4) * Int32Array.BYTES_PER_ELEMENT;
   }
@@ -3381,22 +3469,22 @@ class Bn extends x {
     n.set(this.ijk2xyz, 0), n[4 * 4] = this.default_value;
   }
 }
-class Y extends rt {
+class $ extends rt {
   constructor(t, e, n, o) {
-    super(t, e), this.default_value = o, this.parameters = new Bn(n, o);
+    super(t, e), this.default_value = o, this.parameters = new En(n, o);
   }
   get_shader_module(t) {
-    const e = Q + E + kn;
+    const e = Q + O + Dn;
     return t.device.createShaderModule({ code: e });
   }
   //getWorkgroupCounts() {
   //    return [Math.ceil(this.target.size / 256), 1, 1];
   //};
 }
-const zo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Po = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  NormalColorize: Y
-}, Symbol.toStringTag, { value: "Module" })), Mn = `
+  NormalColorize: $
+}, Symbol.toStringTag, { value: "Module" })), On = `
 // quick and dirty volume low pass filter
 
 // Assumes prefixes: 
@@ -3457,10 +3545,10 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
             }
         }
     }
-}`, Sn = new Float32Array([0.43855053, 0.03654588, 0.0151378, 0.02006508]);
-class Pn extends x {
+}`, Vn = new Float32Array([0.43855053, 0.03654588, 0.0151378, 0.02006508]);
+class Gn extends x {
   constructor(t) {
-    super(), t = t || Sn, this.offset_weights = t, this.buffer_size = 4 * Int32Array.BYTES_PER_ELEMENT;
+    super(), t = t || Vn, this.offset_weights = t, this.buffer_size = 4 * Int32Array.BYTES_PER_ELEMENT;
   }
   load_buffer(t) {
     t = t || this.gpu_buffer;
@@ -3470,10 +3558,10 @@ class Pn extends x {
 }
 class H extends M {
   constructor(t, e, n) {
-    super(), this.source = t, this.target = e, this.offset_weights = n, this.parameters = new Pn(this.offset_weights);
+    super(), this.source = t, this.target = e, this.offset_weights = n, this.parameters = new Gn(this.offset_weights);
   }
   get_shader_module(t) {
-    const e = Q + Mn;
+    const e = Q + On;
     return t.device.createShaderModule({ code: e });
   }
   getWorkgroupCounts() {
@@ -3481,11 +3569,11 @@ class H extends M {
     return [Math.ceil(this.target.size / t / 256), 1, 1];
   }
 }
-const ko = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Do = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   SoftenVolume: H
 }, Symbol.toStringTag, { value: "Module" }));
-class de extends P {
+class ge extends P {
   constructor(t, e, n) {
     super(t), this.indexed_colors = e, this.ratio = n;
   }
@@ -3497,23 +3585,23 @@ class de extends P {
     const e = this.ofVolume;
     this.soft_volume = e.same_geometry(t), this.depth_buffer = this.get_output_depth_buffer(t), this.index_panel = this.get_output_panel(t), this.output_panel = this.get_output_panel(t), this.threshold_value = 0.5;
     const n = this.indexed_colors.length;
-    this.color_panel = t.panel(1, n), this.colors_promise = this.color_panel.push_buffer(this.indexed_colors), this.project_action = new N(
+    this.color_panel = t.panel(1, n), this.colors_promise = this.color_panel.push_buffer(this.indexed_colors), this.project_action = new W(
       e,
       this.depth_buffer,
       this.projection_matrix,
       this.threshold_value
     ), this.project_action.attach_to_context(t), this.index_flatten = this.depth_buffer.flatten_action(this.index_panel), this.soften_action = new H(e, this.soft_volume, null), this.soften_action.attach_to_context(t);
     const o = 0;
-    return this.normal_colorize_action = new Y(
+    return this.normal_colorize_action = new $(
       this.soft_volume,
       this.depth_buffer,
       this.projection_matrix,
       o
-    ), this.normal_colorize_action.attach_to_context(t), this.flatten_normals = this.depth_buffer.flatten_action(this.output_panel), this.index_colorize = new bt(
+    ), this.normal_colorize_action.attach_to_context(t), this.flatten_normals = this.depth_buffer.flatten_action(this.output_panel), this.index_colorize = new xt(
       this.color_panel,
       this.index_panel,
       o
-    ), this.index_colorize.attach_to_context(t), this.mix_action = new Lt(
+    ), this.index_colorize.attach_to_context(t), this.mix_action = new At(
       this.index_panel,
       this.output_panel,
       this.ratio
@@ -3538,10 +3626,10 @@ class de extends P {
     this.mix_action.change_ratio(t), this.run();
   }
 }
-const Bo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Eo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  Mix: de
-}, Symbol.toStringTag, { value: "Module" })), Dn = `
+  Mix: ge
+}, Symbol.toStringTag, { value: "Module" })), Ln = `
 
 // Generate values for volume in projection at a given depth as a depth buffer.
 // Assumes prefixes: 
@@ -3587,7 +3675,7 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
     }
 }
 `;
-class On extends x {
+class An extends x {
   constructor(t, e) {
     super(), this.depth = e, this.buffer_size = (4 * 4 + 4) * Int32Array.BYTES_PER_ELEMENT, this.set_matrix(t);
   }
@@ -3605,21 +3693,21 @@ class On extends x {
 }
 class C extends rt {
   constructor(t, e, n, o) {
-    super(t, e), this.parameters = new On(n, o);
+    super(t, e), this.parameters = new An(n, o);
   }
   get_shader_module(t) {
-    const e = Q + E + Dt + Dn;
+    const e = Q + O + Ot + Ln;
     return t.device.createShaderModule({ code: e });
   }
   change_depth(t) {
     this.parameters.change_depth(t);
   }
 }
-const Mo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Oo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   VolumeAtDepth: C
 }, Symbol.toStringTag, { value: "Module" }));
-class En extends P {
+class Tn extends P {
   constructor(t, e, n, o) {
     super(t), this.segmentationVolume = t, this.intensityVolume = e, this.range_callback = o, this.indexed_colors = n;
   }
@@ -3631,16 +3719,16 @@ class En extends P {
     if (!a)
       throw new Error("Volume is not attached to GPU context.");
     this.attach_to_context(a);
-    const r = this.panel_sequence(a), u = a.paint(r.seg_slice_panel, t), _ = a.paint(r.max_panel, e), c = a.paint(r.intensity_slice_panel, n), l = a.paint(r.shaded_panel, o);
+    const r = this.panel_sequence(a), u = a.paint(r.seg_slice_panel, t), _ = a.paint(r.max_panel, e), l = a.paint(r.intensity_slice_panel, n), c = a.paint(r.shaded_panel, o);
     if (this.paint_sequence = a.sequence([
       r.sequence,
       u,
       _,
-      c,
-      l
+      l,
+      c
     ]), s) {
       const h = this.get_orbiter_callback(), p = k(3);
-      this.orbiter = new W(
+      this.orbiter = new N(
         o,
         null,
         // center,
@@ -3656,7 +3744,7 @@ class En extends P {
   }
   panel_sequence(t) {
     t = t || this.context, this.min_value = this.intensityVolume.min_value, this.max_value = this.intensityVolume.max_value, this.change_range(this.projection_matrix), this.current_depth = (this.min_depth + this.max_depth) / 2;
-    const e = [], n = new le(this.intensityVolume);
+    const e = [], n = new pe(this.intensityVolume);
     this.maxView = n, n.attach_to_context(t);
     const o = n.panel_sequence(t);
     e.push(o.sequence), this.slice_depth_buffer = this.get_output_depth_buffer(t), this.slice_value_panel = this.get_output_panel(t), this.slice_gray_panel = this.get_output_panel(t), this.slice_project_action = new C(
@@ -3670,7 +3758,7 @@ class En extends P {
       this.min_value,
       this.max_value
     ), e.push(this.slice_gray_action);
-    const s = 0.7, a = new de(this.segmentationVolume, this.indexed_colors, s);
+    const s = 0.7, a = new ge(this.segmentationVolume, this.indexed_colors, s);
     a.attach_to_context(t), this.mixView = a;
     const r = a.panel_sequence(t);
     e.push(r.sequence), this.segmentation_depth_buffer = this.get_output_depth_buffer(t), this.segmentation_value_panel = this.get_output_panel(t), this.segmentation_color_panel = this.get_output_panel(t), this.segmentation_project_action = new C(
@@ -3680,7 +3768,7 @@ class En extends P {
       this.current_depth
     ), this.segmentation_project_action.attach_to_context(t), e.push(this.segmentation_project_action), this.segmentation_flatten_action = this.segmentation_depth_buffer.flatten_action(this.segmentation_value_panel), e.push(this.segmentation_flatten_action);
     const u = 0;
-    return this.indexed_colorize = new bt(
+    return this.indexed_colorize = new xt(
       a.color_panel,
       this.segmentation_value_panel,
       u
@@ -3723,11 +3811,11 @@ class En extends P {
     this.min_depth = n.min[2], this.max_depth = n.max[2], this.range_callback && this.range_callback(this.min_depth, this.max_depth);
   }
 }
-const So = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Vo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  SegmentationQuad: En
+  SegmentationQuad: Tn
 }, Symbol.toStringTag, { value: "Module" }));
-class Vn extends P {
+class qn extends P {
   constructor(t, e, n, o) {
     super(t), this.threshold_value = e, this.debugging = n, this.range_callback = o;
   }
@@ -3743,14 +3831,14 @@ class Vn extends P {
   panel_sequence(t) {
     t = t || this.context;
     const e = this.ofVolume;
-    this.min_value = e.min_value, this.max_value = e.max_value, this.change_range(this.projection_matrix), this.soft_volume = e.same_geometry(t), this.soften_action = new H(e, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), this.threshold_depth_buffer = this.get_output_depth_buffer(t), this.threshold_value = this.threshold_value || (e.min_value + e.max_value) / 2, this.project_action = new N(
+    this.min_value = e.min_value, this.max_value = e.max_value, this.change_range(this.projection_matrix), this.soft_volume = e.same_geometry(t), this.soften_action = new H(e, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), this.threshold_depth_buffer = this.get_output_depth_buffer(t), this.threshold_value = this.threshold_value || (e.min_value + e.max_value) / 2, this.project_action = new W(
       e,
       this.threshold_depth_buffer,
       this.projection_matrix,
       this.threshold_value
     ), this.project_action.attach_to_context(t);
     const n = 0;
-    this.normal_colorize_action = new Y(
+    this.normal_colorize_action = new $(
       this.soft_volume,
       this.threshold_depth_buffer,
       this.projection_matrix,
@@ -3762,7 +3850,7 @@ class Vn extends P {
       this.level_depth_buffer,
       this.projection_matrix,
       this.current_depth
-    ), this.level_project_action.attach_to_context(t), this.level_clone_operation = this.level_depth_buffer.clone_operation(), this.clone_level_action = this.level_clone_operation.clone_action, this.level_clone_depth_buffer = this.level_clone_operation.clone, this.level_gray_action = new ie(
+    ), this.level_project_action.attach_to_context(t), this.level_clone_operation = this.level_depth_buffer.clone_operation(), this.clone_level_action = this.level_clone_operation.clone_action, this.level_clone_depth_buffer = this.level_clone_operation.clone, this.level_gray_action = new ae(
       this.level_depth_buffer,
       this.level_clone_depth_buffer,
       e.min_value,
@@ -3787,12 +3875,12 @@ class Vn extends P {
       //range.max[2],
       0
       // slice depths, not values
-    ), this.slice_back_action.attach_to_context(t), this.back_level_ratios = [0.5, 0.5, 0.5, 1], this.mix_back_level_action = new kt(
+    ), this.slice_back_action.attach_to_context(t), this.back_level_ratios = [0.5, 0.5, 0.5, 1], this.mix_back_level_action = new Mt(
       this.back_depth_buffer,
       //this.front_depth_buffer, // debug test
       this.level_clone_depth_buffer,
       this.back_level_ratios
-    ), this.mix_back_level_action.attach_to_context(t), this.output_clone_operation = this.front_depth_buffer.clone_operation(), this.output_clone_action = this.output_clone_operation.clone_action, this.output_depth_buffer = this.output_clone_operation.clone, this.combine_ratios = [0.5, 0.5, 0.5, 1], this.combine_action = new kt(
+    ), this.mix_back_level_action.attach_to_context(t), this.output_clone_operation = this.front_depth_buffer.clone_operation(), this.output_clone_action = this.output_clone_operation.clone_action, this.output_depth_buffer = this.output_clone_operation.clone, this.combine_ratios = [0.5, 0.5, 0.5, 1], this.combine_action = new Mt(
       this.level_clone_depth_buffer,
       //this.front_depth_buffer, // debug test
       this.output_depth_buffer,
@@ -3830,11 +3918,11 @@ class Vn extends P {
     this.level_project_action.change_depth(this.current_depth), this.slice_front_action.change_bounds(this.min_depth, this.current_depth), this.slice_back_action.change_bounds(this.current_depth, this.max_depth);
   }
 }
-const Po = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Go = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  SlicedThreshold: Vn
+  SlicedThreshold: qn
 }, Symbol.toStringTag, { value: "Module" }));
-class Gn extends P {
+class Un extends P {
   constructor(t, e) {
     super(t), this.soften = e;
   }
@@ -3846,14 +3934,14 @@ class Gn extends P {
     const e = this.ofVolume;
     this.depth_buffer = this.get_output_depth_buffer(t), this.panel = this.get_output_panel(t), this.min_value = e.min_value, this.max_value = e.max_value, this.threshold_value = (e.min_value + e.max_value) / 2;
     var n = e;
-    this.soften && (this.soft_volume = e.same_geometry(t), this.soften_action = new H(e, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), n = this.soft_volume), this.project_action = new N(
+    this.soften && (this.soft_volume = e.same_geometry(t), this.soften_action = new H(e, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), n = this.soft_volume), this.project_action = new W(
       n,
       this.depth_buffer,
       this.projection_matrix,
       this.threshold_value
     ), this.project_action.attach_to_context(t);
     const o = 0;
-    return this.colorize_action = new Y(
+    return this.colorize_action = new $(
       e,
       this.depth_buffer,
       this.projection_matrix,
@@ -3889,11 +3977,11 @@ class Gn extends P {
     this.project_action.change_threshold(t), this.run();
   }
 }
-const Do = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Lo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  Threshold: Gn
+  Threshold: Un
 }, Symbol.toStringTag, { value: "Module" }));
-class Ln extends P {
+class In extends P {
   constructor(t, e) {
     super(t), this.range_callback = e, this.colorize = 0;
   }
@@ -3905,6 +3993,9 @@ class Ln extends P {
   }
   async set_colorize(t) {
     t ? this.colorize = 1 : this.colorize = 0, await this.max_gray_action.change_colorize(this.colorize), await this.slice_gray_action.change_colorize(this.colorize), this.run();
+  }
+  async change_volume(t) {
+    this.ofVolume.set_data(t), this.ofVolume.push_buffer(), this.min_value = this.ofVolume.min_value, this.max_value = this.ofVolume.max_value, this.run();
   }
   async paint_on_canvases(t, e, n, o) {
     const s = this.ofVolume.context;
@@ -3918,13 +4009,13 @@ class Ln extends P {
       u,
       _
     ]), o) {
-      const c = this.get_orbiter_callback(), l = k(3);
-      this.orbiter = new W(
+      const l = this.get_orbiter_callback(), c = k(3);
+      this.orbiter = new N(
         n,
         null,
         // center,
-        l,
-        c
+        c,
+        l
         // callback,
       ), this.orbiter.attach_listeners_to(t), this.orbiter.attach_listeners_to(e);
     }
@@ -3938,14 +4029,14 @@ class Ln extends P {
     debugger;
     t = t || this.context;
     const e = [], n = this.ofVolume;
-    this.min_value = n.min_value, this.max_value = n.max_value, this.change_range(this.projection_matrix), this.current_depth = (this.min_depth + this.max_depth) / 2, this.soft_volume = n.same_geometry(t), this.soften_action = new H(n, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), this.threshold_depth_buffer = this.get_output_depth_buffer(t), this.threshold_value = (n.min_value + n.max_value) / 2, this.soft_volume, this.threshold_project_action = new N(
+    this.min_value = n.min_value, this.max_value = n.max_value, this.change_range(this.projection_matrix), this.current_depth = (this.min_depth + this.max_depth) / 2, this.soft_volume = n.same_geometry(t), this.soften_action = new H(n, this.soft_volume, null), this.soften_action.attach_to_context(t), this.soften_action.run(), this.soften_promise = t.onSubmittedWorkDone(), this.threshold_depth_buffer = this.get_output_depth_buffer(t), this.threshold_value = (n.min_value + n.max_value) / 2, this.soft_volume, this.threshold_project_action = new W(
       n,
       this.threshold_depth_buffer,
       this.projection_matrix,
       this.threshold_value
     ), this.threshold_project_action.attach_to_context(t), e.push(this.threshold_project_action);
     const o = 0;
-    this.colorize_action = new Y(
+    this.colorize_action = new $(
       this.soft_volume,
       this.threshold_depth_buffer,
       this.projection_matrix,
@@ -3997,11 +4088,11 @@ class Ln extends P {
     this.min_depth = n.min[2], this.max_depth = n.max[2], this.range_callback && this.range_callback(this.min_depth, this.max_depth);
   }
 }
-const Oo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Ao = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  Triptych: Ln
+  Triptych: In
 }, Symbol.toStringTag, { value: "Module" }));
-class An extends P {
+class Fn extends P {
   async pick(t, e) {
     const n = await super.pick(t, e), o = n.panel_coords;
     return await this.max_depth_buffer.pull_data(), n.maximum = this.max_depth_buffer.location(
@@ -4026,7 +4117,7 @@ class An extends P {
       this.max_value
     );
     const n = 1e3;
-    return this.dots_action = new fe(
+    return this.dots_action = new me(
       this.grey_panel,
       n
     ), this.dots_action.attach_to_context(t), this.project_to_panel = t.sequence([
@@ -4049,11 +4140,11 @@ class An extends P {
     super.change_matrix(t), this.project_action.change_matrix(t);
   }
 }
-const Eo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const To = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  Max: An
+  Max: Fn
 }, Symbol.toStringTag, { value: "Module" }));
-class Tn extends P {
+class Cn extends P {
   panel_sequence(t) {
     t = t || this.context;
     const e = this.ofVolume;
@@ -4137,11 +4228,11 @@ class Tn extends P {
     }
   }
 }
-const Vo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const qo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  TestRangeView: Tn
+  TestRangeView: Cn
 }, Symbol.toStringTag, { value: "Module" }));
-class qn {
+class Rn {
   constructor(t, e, n, o) {
     o = o || 0.7, this.ratio = o, this.indexed_colors = new Uint32Array(e), this.canvas = n, this.volume_url = t, this.connect_future = this.connect(), this.volume_future = this.load();
   }
@@ -4153,10 +4244,10 @@ class qn {
     console.log("buffer", o);
     const s = new Uint32Array(o), a = new Float32Array(s);
     console.log("f32", a), this.volume_shape = a.slice(0, 3), this.volume_content = a.slice(3);
-    const [r, u, _] = this.volume_shape, c = k(4);
-    c[1][1] = -1;
-    const l = b(null, [-r / 2, -u / 2, -_ / 2]);
-    this.volume_matrix = m(c, l);
+    const [r, u, _] = this.volume_shape, l = k(4);
+    l[1][1] = -1;
+    const c = b(null, [-r / 2, -u / 2, -_ / 2]);
+    this.volume_matrix = m(l, c);
     debugger;
     await this.connect_future, this.volume = t.volume(
       this.volume_shape,
@@ -4193,7 +4284,7 @@ class qn {
     ], this.affine_translation = b(null, [-f / 2, -f / 2, -f]), this.projection_matrix = m(
       b(this.initial_rotation),
       this.affine_translation
-    ), this.project_action = new N(
+    ), this.project_action = new W(
       this.volume,
       this.depth_buffer,
       this.projection_matrix,
@@ -4202,17 +4293,17 @@ class qn {
     const [j, v] = this.output_shape;
     this.index_panel = t.panel(v, j), this.index_flatten = this.depth_buffer.flatten_action(this.index_panel);
     const g = 0;
-    this.index_colorize = new bt(
+    this.index_colorize = new xt(
       this.color_panel,
       this.index_panel,
       g
-    ), this.index_colorize.attach_to_context(t), this.colorize_action = new Y(
+    ), this.index_colorize.attach_to_context(t), this.colorize_action = new $(
       this.soft_volume,
       // do normal colorization using softened volume
       this.depth_buffer,
       this.projection_matrix,
       g
-    ), this.colorize_action.attach_to_context(t), this.orbiter = new W(
+    ), this.colorize_action.attach_to_context(t), this.orbiter = new N(
       this.canvas,
       null,
       // center,
@@ -4221,7 +4312,7 @@ class qn {
       // callback,
     ), this.panel = t.panel(v, j), this.flatten_action = this.depth_buffer.flatten_action(this.panel);
     const S = this.ratio;
-    this.mix_action = new Lt(
+    this.mix_action = new At(
       this.index_panel,
       this.panel,
       S
@@ -4263,11 +4354,11 @@ class qn {
     e && this.mix_action.change_ratio(e), this.run();
   }
 }
-const Go = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Uo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  MixPipeline: qn
+  MixPipeline: Rn
 }, Symbol.toStringTag, { value: "Module" }));
-class Un {
+class Nn {
   constructor(t, e, n) {
     this.slider = n, this.canvas = e, this.volume_url = t, this.connect_future = this.connect(), this.volume_future = this.load();
   }
@@ -4281,8 +4372,8 @@ class Un {
     console.log("f32", s), this.volume_shape = s.slice(0, 3), this.volume_content = s.slice(3);
     const [a, r, u] = this.volume_shape, _ = k(4);
     _[1][1] = -1;
-    const c = b(null, [-a / 2, -r / 2, -u / 2]);
-    this.volume_matrix = m(_, c);
+    const l = b(null, [-a / 2, -r / 2, -u / 2]);
+    this.volume_matrix = m(_, l);
     debugger;
     await this.connect_future, this.volume = t.volume(
       this.volume_shape,
@@ -4290,8 +4381,8 @@ class Un {
       this.volume_matrix,
       Float32Array
     ), console.log("input Volume", this.volume);
-    const l = this.volume.min_value, h = this.volume.max_value;
-    this.slider.min = l, this.slider.max = h, this.slider.value = (l + h) / 2, this.slider.step = (h - l) / 100;
+    const c = this.volume.min_value, h = this.volume.max_value;
+    this.slider.min = c, this.slider.max = h, this.slider.value = (c + h) / 2, this.slider.step = (h - c) / 100;
     const p = Math.max(a, r, u), f = Math.ceil(Math.sqrt(2) * p);
     this.output_shape = [f, f];
     const d = -1e4, y = -1e4;
@@ -4311,19 +4402,19 @@ class Un {
     ], this.affine_translation = b(null, [-f / 2, -f / 2, -f]), this.projection_matrix = m(
       b(this.initial_rotation),
       this.affine_translation
-    ), this.project_action = new N(
+    ), this.project_action = new W(
       this.volume,
       this.depth_buffer,
       this.projection_matrix,
       this.threshold_value
     ), this.project_action.attach_to_context(t);
     const j = 0;
-    this.colorize_action = new Y(
+    this.colorize_action = new $(
       this.volume,
       this.depth_buffer,
       this.projection_matrix,
       j
-    ), this.colorize_action.attach_to_context(t), this.orbiter = new W(
+    ), this.colorize_action.attach_to_context(t), this.orbiter = new N(
       this.canvas,
       null,
       // center,
@@ -4361,11 +4452,11 @@ class Un {
     e && this.project_action.change_threshold(e), this.run();
   }
 }
-const Lo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Io = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  ThresholdPipeline: Un
+  ThresholdPipeline: Nn
 }, Symbol.toStringTag, { value: "Module" }));
-class In extends P {
+class Wn extends P {
   panel_sequence(t) {
     t = t || this.context;
     const e = this.ofVolume;
@@ -4407,90 +4498,90 @@ class In extends P {
     }
   }
 }
-const Ao = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const Fo = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  TestDepthView: In
-}, Symbol.toStringTag, { value: "Module" })), To = "webgpu_volume";
-function qo() {
+  TestDepthView: Wn
+}, Symbol.toStringTag, { value: "Module" })), Co = "webgpu_volume";
+function Ro() {
   return new w();
 }
 export {
-  ho as CPUVolume,
-  oo as CombineDepths,
-  Qn as CopyAction,
-  po as DepthBufferRange,
-  Wn as GPUAction,
-  Yn as GPUColorPanel,
-  to as GPUContext,
-  Fn as GPUDataObject,
-  Hn as GPUDepthBuffer,
-  Rn as GPUVolume,
-  fo as IndexColorizePanel,
-  Eo as MaxDotView,
-  Xn as MaxProjection,
-  vo as MaxView,
-  xo as MixColorPanels,
-  yo as MixDepthBuffers,
-  wo as MixDotsOnPanel,
-  Bo as MixView,
-  zo as NormalAction,
-  $n as PaintPanel,
-  Se as Painter_wgsl,
-  io as PastePanel,
-  Jn as Projection,
-  Nn as SampleVolume,
-  So as SegmentationQuad,
-  Po as SlicedThresholdView,
-  ko as Soften,
-  jo as ThresholdAction,
-  Do as ThresholdView,
-  Oo as Triptych,
-  Kn as UpdateAction,
-  Zn as UpdateGray,
-  mo as ViewVolume,
-  Mo as VolumeAtDepth,
-  co as canvas_orbit,
-  Ne as combine_depth_buffers_wgsl,
-  so as combine_test,
-  qo as context,
-  Ee as convert_buffer_wgsl,
-  Ve as convert_depth_buffer_wgsl,
-  ne as convert_gray_prefix_wgsl,
-  Cn as coordinates,
-  pn as depth_buffer_range_wgsl,
-  E as depth_buffer_wgsl,
-  Vo as depth_range_view,
-  $e as do_combine,
-  nn as do_gray,
-  sn as do_max_projection,
-  Ze as do_mouse_paste,
-  Ue as do_paint,
-  Qe as do_paste,
-  rn as do_pipeline,
-  Te as do_sample,
-  Me as embed_volume_wgsl,
-  uo as gray_test,
-  dn as index_colorize_wgsl,
-  _o as max_projection_test,
-  De as max_value_project_wgsl,
-  gn as mix_color_panels_wgsl,
-  bn as mix_depth_buffers_wgsl,
-  yn as mix_dots_on_panel_wgsl,
-  Go as mix_test,
-  ro as mousepaste,
-  To as name,
-  kn as normal_colors_wgsl,
-  no as paint_test,
+  vo as CPUVolume,
+  uo as CombineDepths,
+  no as CopyAction,
+  bo as DepthBufferRange,
+  Jn as GPUAction,
+  Qn as GPUColorPanel,
+  io as GPUContext,
+  $n as GPUDataObject,
+  oo as GPUDepthBuffer,
+  Kn as GPUVolume,
+  xo as IndexColorizePanel,
+  To as MaxDotView,
+  eo as MaxProjection,
+  jo as MaxView,
+  ko as MixColorPanels,
+  Bo as MixDepthBuffers,
+  Mo as MixDotsOnPanel,
+  Eo as MixView,
+  Po as NormalAction,
+  Hn as PaintPanel,
+  De as Painter_wgsl,
+  lo as PastePanel,
+  to as Projection,
+  Xn as SampleVolume,
+  Vo as SegmentationQuad,
+  Go as SlicedThresholdView,
+  Do as Soften,
+  So as ThresholdAction,
+  Lo as ThresholdView,
+  Ao as Triptych,
+  Zn as UpdateAction,
+  so as UpdateGray,
+  yo as ViewVolume,
+  Oo as VolumeAtDepth,
+  mo as canvas_orbit,
+  Ye as combine_depth_buffers_wgsl,
+  _o as combine_test,
+  Ro as context,
+  Ge as convert_buffer_wgsl,
+  Le as convert_depth_buffer_wgsl,
+  oe as convert_gray_prefix_wgsl,
+  Yn as coordinates,
+  vn as depth_buffer_range_wgsl,
+  O as depth_buffer_wgsl,
+  qo as depth_range_view,
+  Je as do_combine,
+  sn as do_gray,
+  rn as do_max_projection,
+  en as do_mouse_paste,
+  Fe as do_paint,
+  Ze as do_paste,
+  _n as do_pipeline,
+  Ue as do_sample,
+  Pe as embed_volume_wgsl,
+  po as gray_test,
+  xn as index_colorize_wgsl,
+  fo as max_projection_test,
+  Oe as max_value_project_wgsl,
+  wn as mix_color_panels_wgsl,
+  zn as mix_depth_buffers_wgsl,
+  Bn as mix_dots_on_panel_wgsl,
+  Uo as mix_test,
+  ho as mousepaste,
+  Co as name,
+  Dn as normal_colors_wgsl,
+  ro as paint_test,
   ut as panel_buffer_wgsl,
-  Je as paste_panel_wgsl,
-  ao as paste_test,
-  lo as pipeline_test,
-  eo as sample_test,
-  Mn as soften_volume_wgsl,
-  Lo as threshold_test,
-  jn as threshold_wgsl,
-  Ao as vol_depth_view,
-  Dn as volume_at_depth_wgsl,
+  Qe as paste_panel_wgsl,
+  co as paste_test,
+  go as pipeline_test,
+  ao as sample_test,
+  On as soften_volume_wgsl,
+  Io as threshold_test,
+  Sn as threshold_wgsl,
+  Fo as vol_depth_view,
+  Ln as volume_at_depth_wgsl,
   Q as volume_frame_wgsl,
-  Dt as volume_intercepts_wgsl
+  Ot as volume_intercepts_wgsl
 };
