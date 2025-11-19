@@ -56,16 +56,48 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
                 let ij_f = ijk.xy / ijk.w;
                 let dbLocation = f_depth_buffer_location_of(ij_f, dbShape);
                 if (dbLocation.valid) {
-                    let data_offset = dbLocation.data_offset;
-                    let existing_value = outputDB.data_and_depth[data_offset];
-                    let depth_offset = dbLocation.depth_offset;
-                    
-                    if (valuef32 > existing_value) {
-                        // xxx note no data lock here
-                        outputDB.data_and_depth[depth_offset] = ijk.z;
-                        outputDB.data_and_depth[data_offset] = valuef32;
-                    } else {
-                        //do nothing
+                    // determine depth buffer extent of all corners of IJK voxel
+                    var mini = dbLocation.ij.x;
+                    var minj = dbLocation.ij.y;
+                    var maxi = mini;
+                    var maxj = minj;
+                    for (var di=0u; di<=1; di++) {
+                        var ii = i + di;
+                        for (var dj=0u; dj<=1; dj++) {
+                            var jj = J + dj;
+                            for (var dk=0u; dk<=1; dk++) {
+                                var kk = K + dk;
+                                let corner_ijk = vec3u(ii, jj, kk);
+                                let corner_xyz = to_model(corner_ijk, &inputGeometry);
+                                let corner_ijk_f4 = xyz2ijk * vec4f(corner_xyz.x, corner_xyz.y, corner_xyz.z, 1.0);
+                                let corner_ij_f = corner_ijk_f4.xy / corner_ijk_f4.w;
+                                let corner_dbLocation = f_depth_buffer_location_of(corner_ij_f, dbShape);
+                                if (corner_dbLocation.valid) {
+                                    mini = min(mini, corner_dbLocation.ij.x);
+                                    minj = min(minj, corner_dbLocation.ij.y);
+                                    maxi = max(maxi, corner_dbLocation.ij.x);
+                                    maxj = max(maxj, corner_dbLocation.ij.y);
+                                }
+                            }
+                        }
+                    }
+                    for (var id=mini; id<=maxi; id++) {
+                        for (var jd=minj; jd<=maxj; jd++) {
+                            let ijd = vec2i(id, jd);
+                            let dbLocation = depth_buffer_location_of(ijd, dbShape);
+                            if (dbLocation.valid) {
+                                let data_offset = dbLocation.data_offset;
+                                let existing_value = outputDB.data_and_depth[data_offset];
+                                let depth_offset = dbLocation.depth_offset;
+                                if (valuef32 > existing_value) {
+                                    // xxx note no data lock here
+                                    outputDB.data_and_depth[depth_offset] = ijk.z;
+                                    outputDB.data_and_depth[data_offset] = valuef32;
+                                } else {
+                                    //do nothing
+                                }
+                            }
+                        }
                     }
                     
                 }
