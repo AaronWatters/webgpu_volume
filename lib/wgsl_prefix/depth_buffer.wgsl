@@ -22,6 +22,14 @@ struct DepthBufferF32 {
     data_and_depth: array<f32>,
 }
 
+// atomic u32 version of depth buffer structure
+struct DepthBufferAtomicU32 {
+    // height/width followed by default depth and default value.
+    shape: depthShape,
+    // content data followed by depth as a single array
+    data_and_depth: array<atomic<u32>>,
+}
+
 struct BufferLocation {
     data_offset: u32,
     depth_offset: u32,
