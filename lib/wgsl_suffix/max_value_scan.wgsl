@@ -18,7 +18,7 @@ struct parameters {
 
 @group(0) @binding(0) var<storage, read> inputVolume : Volume;
 
-@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferF32;
+@group(1) @binding(0) var<storage, read_write> outputDB : DepthBufferAtomicU32;
 
 @group(2) @binding(0) var<storage, read> parms: parameters;
 
@@ -87,12 +87,17 @@ fn main(@builtin(global_invocation_id) global_id : vec3u) {
                             let dbLocation = depth_buffer_location_of(ijd, dbShape);
                             if (dbLocation.valid) {
                                 let data_offset = dbLocation.data_offset;
-                                let existing_value = outputDB.data_and_depth[data_offset];
+                                //var existing_value_u32 = outputDB.data_and_depth[data_offset];
+                                let p = &outputDB.data_and_depth[data_offset];
+                                let existing_value_u32: u32 = atomicLoad(p);
+                                let existing_value = bitcast<f32>(existing_value_u32);
                                 let depth_offset = dbLocation.depth_offset;
+                                //let existing_depth_u32 = outputDB.data_and_depth[depth_offset];
+                                //let existing_depth = bitcast<f32>(existing_depth_u32);
                                 if (valuef32 > existing_value) {
                                     // xxx note no data lock here
-                                    outputDB.data_and_depth[depth_offset] = ijk.z;
-                                    outputDB.data_and_depth[data_offset] = valuef32;
+                                    atomicStore(&outputDB.data_and_depth[depth_offset], bitcast<u32>(ijk.z));
+                                    atomicStore(&outputDB.data_and_depth[data_offset], bitcast<u32>(valuef32));
                                 } else {
                                     //do nothing
                                 }
