@@ -4,6 +4,9 @@
 //  depth_buffer.wgsl
 //  volume_frame.wgsl
 //  volume_intercept.wgsl
+//
+// This implementation iterates throught the pixels of the output
+// and probes into the xyz volume.
 
 struct parameters {
     ijk2xyz : mat4x4f,
